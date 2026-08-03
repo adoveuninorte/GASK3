@@ -12,7 +12,8 @@ const inputPrecio = $('precio');
 const inputValorPagado = $('valorPagado');
 const inputGalones = $('galones');
 const inputOdometro = $('odometro');
-const selectTanqueLleno = $('tanque-lleno');
+const hiddenTanqueLleno = $('tanque-lleno');
+const toggleTanqueLleno = $('toggle-tanque-lleno');
 const inputNotas = $('notas');
 const btnSubmit = $('btn-submit');
 const btnReset = $('btn-reset');
@@ -34,6 +35,21 @@ const modalConfirmar = $('modal-confirmar');
 const btnModalCancelar = $('btn-modal-cancelar');
 const btnModalEliminar = $('btn-modal-eliminar');
 const modalMensaje = $('modal-mensaje');
+
+// Dashboard
+const dashRendidora = $('dash-rendidora');
+const dashRendidoraDetalle = $('dash-rendidora-detalle');
+const dashCosto = $('dash-costo');
+const dashCostoDetalle = $('dash-costo-detalle');
+const dashEconomico = $('dash-economico');
+const dashEconomicoDetalle = $('dash-economico-detalle');
+const tablaEstacionesBody = $('tabla-estaciones-body');
+
+// Pestañas
+const tabBtnRegistro = $('tab-btn-registro');
+const tabBtnDashboard = $('tab-btn-dashboard');
+const tabRegistro = $('tab-registro');
+const tabDashboard = $('tab-dashboard');
 
 // Variables de estado
 let tanqueos = [];
@@ -78,6 +94,13 @@ function registrarEventos() {
   inputPrecio.addEventListener('input', recalcularCampos);
   inputValorPagado.addEventListener('input', recalcularCampos);
 
+  // Toggle Tanque Lleno / Parcial
+  toggleTanqueLleno.addEventListener('click', (e) => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    setTanqueLlenoValor(Number(btn.dataset.valor));
+  });
+
   // Filtros
   filtroEstacion.addEventListener('change', renderizarTabla);
   filtroCombustible.addEventListener('change', renderizarTabla);
@@ -96,9 +119,40 @@ function registrarEventos() {
 
   // FAB: agregar tanqueo (móvil)
   fabAgregar.addEventListener('click', () => {
-    cancelarEdicion();
+    cambiarPestana('registro');
     $('registro').scrollIntoView({ behavior: 'smooth', block: 'start' });
     inputFecha.focus();
+  });
+
+  // Pestañas
+  tabBtnRegistro.addEventListener('click', () => cambiarPestana('registro'));
+  tabBtnDashboard.addEventListener('click', () => cambiarPestana('dashboard'));
+}
+
+// ===== Cambiar pestaña =====
+function cambiarPestana(nombre) {
+  const esRegistro = nombre === 'registro';
+
+  tabBtnRegistro.classList.toggle('active', esRegistro);
+  tabBtnDashboard.classList.toggle('active', !esRegistro);
+  tabBtnRegistro.setAttribute('aria-selected', esRegistro ? 'true' : 'false');
+  tabBtnDashboard.setAttribute('aria-selected', !esRegistro ? 'true' : 'false');
+
+  tabRegistro.classList.toggle('active', esRegistro);
+  tabDashboard.classList.toggle('active', !esRegistro);
+
+  if (!esRegistro) {
+    renderizarDashboard();
+    // Re-renderizar gráfico al mostrarlo (por si cambió el tamaño del contenedor)
+    renderizarGrafico();
+  }
+}
+
+// ===== Toggle Tanque Lleno =====
+function setTanqueLlenoValor(valor) {
+  hiddenTanqueLleno.value = String(valor);
+  toggleTanqueLleno.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', Number(btn.dataset.valor) === valor);
   });
 }
 
@@ -159,7 +213,7 @@ function manejarEnvioFormulario(e) {
       galones: valorPagado / precio,
       costo: valorPagado,
       odometro: odometro,
-      tanqueLleno: Number(selectTanqueLleno.value),
+      tanqueLleno: Number(hiddenTanqueLleno.value) || 1,
       notas: inputNotas.value.trim()
     });
 
@@ -179,7 +233,7 @@ function manejarEnvioFormulario(e) {
       galones: valorPagado / precio,
       costo: valorPagado,
       odometro: odometro,
-      tanqueLleno: Number(selectTanqueLleno.value),
+      tanqueLleno: Number(hiddenTanqueLleno.value) || 1,
       notas: inputNotas.value.trim()
     });
 
@@ -203,6 +257,8 @@ function limpiarFormulario() {
   tanqueoEnEdicion = null;
   btnSubmit.innerHTML = '💾 Guardar Tanqueo';
   btnCancelEdit.classList.add('hidden');
+  // Por defecto: tanque parcial
+  setTanqueLlenoValor(1);
 }
 
 // ===== Editar tanqueo =====
@@ -219,12 +275,14 @@ function comenzarEdicion(id) {
   inputValorPagado.value = tanqueo.costo;
   inputGalones.value = tanqueo.galones.toFixed(3);
   inputOdometro.value = tanqueo.odometro;
-  selectTanqueLleno.value = String(tanqueo.tanqueLleno);
+  setTanqueLlenoValor(Number(tanqueo.tanqueLleno) || 1);
   inputNotas.value = tanqueo.notas || '';
 
   btnSubmit.innerHTML = '💾 Actualizar Tanqueo';
   btnCancelEdit.classList.remove('hidden');
 
+  // Cambiar a pestaña de registro
+  cambiarPestana('registro');
   // Desplazar al formulario
   $('registro').scrollIntoView({ behavior: 'smooth', block: 'start' });
   inputFecha.focus();
@@ -291,6 +349,7 @@ function actualizarInterfaz() {
   actualizarEstadisticas();
   actualizarUltimoRendimiento();
   renderizarTabla();
+  renderizarDashboard();
   renderizarGrafico();
   actualizarVisibilidadSecciones();
 }
@@ -457,6 +516,145 @@ function renderizarTabla() {
       </tr>
     `;
   }).join('');
+}
+
+// ===== Renderizar Dashboard (análisis por estación) =====
+function renderizarDashboard() {
+  const conRendimiento = calcularRendimientos();
+
+  if (tanqueos.length === 0) {
+    dashRendidora.textContent = '--';
+    dashRendidoraDetalle.textContent = 'Registra 2+ tanqueos llenos';
+    dashCosto.textContent = '--';
+    dashCostoDetalle.textContent = 'Sin datos suficientes';
+    dashEconomico.textContent = '--';
+    dashEconomicoDetalle.textContent = 'Sin datos suficientes';
+    tablaEstacionesBody.innerHTML = '';
+    return;
+  }
+
+  // Agrupar por estación
+  const estacionesDatos = {};
+
+  tanqueos.forEach(t => {
+    const nombre = t.estacion;
+    if (!estacionesDatos[nombre]) {
+      estacionesDatos[nombre] = {
+        nombre,
+        tanqueos: 0,
+        llenos: 0,
+        rendimientos: [],
+        totalCosto: 0,
+        totalKm: 0,
+        totalGalones: 0,
+        precios: [],
+        costoPorKm: null,
+        kmPor10000: null
+      };
+    }
+    const e = estacionesDatos[nombre];
+    e.tanqueos++;
+    if (t.tanqueLleno === 2) e.llenos++;
+    e.totalCosto += t.costo || 0;
+    e.totalGalones += t.galones || 0;
+    e.precios.push(t.precio || 0);
+  });
+
+  // Calcular km totales por estación
+  Object.values(estacionesDatos).forEach(e => {
+    const tanqueosEst = tanqueos.filter(t => t.estacion === e.nombre);
+    if (tanqueosEst.length > 0) {
+      const odos = tanqueosEst.map(t => t.odometro || 0);
+      e.totalKm = Math.max(...odos) - Math.min(...odos);
+      if (e.totalKm > 0) {
+        e.costoPorKm = e.totalCosto / e.totalKm;
+        e.kmPor10000 = (10000 / e.costoPorKm);
+      }
+    }
+  });
+
+  // Agregar rendimientos por estación
+  const conRend = calcularRendimientos();
+  conRend.forEach(t => {
+    if (t.rendimiento !== null && estacionesDatos[t.estacion]) {
+      estacionesDatos[t.estacion].rendimientos.push(t.rendimiento);
+    }
+  });
+
+  const estacionesArr = Object.values(estacionesDatos).map(e => {
+    e.rendPromedio = e.rendimientos.length > 0
+      ? e.rendimientos.reduce((a, b) => a + b, 0) / e.rendimientos.length
+      : null;
+    e.precioPromedio = e.precios.length > 0
+      ? e.precios.reduce((a, b) => a + b, 0) / e.precios.length
+      : 0;
+    return e;
+  });
+
+  // --- Card 1: Estación más rendidora (mejor rendimiento promedio, requiere 2+ llenos) ---
+  const conRendProm = estacionesArr.filter(e => e.rendPromedio !== null && e.llenos >= 2);
+  if (conRendProm.length > 0) {
+    const mejor = conRendProm.sort((a, b) => b.rendPromedio - a.rendPromedio)[0];
+    dashRendidora.textContent = mejor.nombre;
+    dashRendidoraDetalle.textContent =
+      `${formatearNumero(mejor.rendPromedio, 1)} km/gal promedio · ${mejor.llenos} tanqueos llenos`;
+  } else {
+    dashRendidora.textContent = '--';
+    dashRendidoraDetalle.textContent = 'Necesitas 2 tanqueos llenos en una misma estación';
+  }
+
+  // --- Card 2: Mejor costo-beneficio (más km por $10.000) ---
+  const conKmPor10000 = estacionesArr.filter(e => e.kmPor10000 !== null && e.tanqueos >= 2);
+  if (conKmPor10000.length > 0) {
+    const mejorCosto = conKmPor10000.sort((a, b) => b.kmPor10000 - a.kmPor10000)[0];
+    dashCosto.textContent = mejorCosto.nombre;
+    dashCostoDetalle.textContent =
+      `${formatearNumero(mejorCosto.kmPor10000, 1)} km por cada $10.000 · promedio $${Math.round(mejorCosto.costoPorKm * 1000) / 1000} /km`;
+  } else {
+    dashCosto.textContent = '--';
+    dashCostoDetalle.textContent = 'Necesitas 2+ registros en una misma estación';
+  }
+
+  // --- Card 3: Galón más económico (menor precio promedio) ---
+  const conPrecio = estacionesArr.filter(e => e.tanqueos >= 1);
+  if (conPrecio.length > 0) {
+    const economico = conPrecio.sort((a, b) => a.precioPromedio - b.precioPromedio)[0];
+    dashEconomico.textContent = economico.nombre;
+    dashEconomicoDetalle.textContent =
+      `${formatearCOP(economico.precioPromedio)} por galón en promedio`;
+  } else {
+    dashEconomico.textContent = '--';
+    dashEconomicoDetalle.textContent = 'Sin datos suficientes';
+  }
+
+  // --- Tabla comparativa ---
+  const filasHTML = estacionesArr
+    .sort((a, b) => (b.rendPromedio || 0) - (a.rendPromedio || 0))
+    .map(e => {
+      const rend = e.rendPromedio !== null
+        ? `${formatearNumero(e.rendPromedio, 1)} km/gal`
+        : e.llenos >= 1
+          ? '<small class="text-muted">pendiente</small>'
+          : '<small class="text-muted">--</small>';
+      const km10000 = e.kmPor10000 !== null
+        ? formatearNumero(e.kmPor10000, 1)
+        : '--';
+      const precio = e.precioPromedio > 0
+        ? formatearCOP(e.precioPromedio)
+        : '--';
+      return `
+        <tr>
+          <td data-label="Estación">${escapeHTML(e.nombre)}</td>
+          <td data-label="Tanqueos">${e.tanqueos}</td>
+          <td data-label="Rend. Promedio">${rend}</td>
+          <td data-label="km / $10.000">${km10000}</td>
+          <td data-label="Precio Promedio">${precio}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  tablaEstacionesBody.innerHTML = filasHTML || '<tr><td colspan="5" class="empty-state">Sin datos para mostrar</td></tr>';
 }
 
 // ===== Gráfico =====

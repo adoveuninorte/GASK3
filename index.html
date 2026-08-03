@@ -26,182 +26,249 @@
 
   <main class="container">
 
-    <!-- Panel de Estadísticas -->
-    <section id="stats-panel" aria-label="Estadísticas">
-      <div class="stats-grid">
-        <div class="stat-card" id="stat-rendimiento">
-          <div class="stat-label">Rendimiento Promedio</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">km/gal</div>
-        </div>
-        <div class="stat-card" id="stat-mejor">
-          <div class="stat-label">Mejor Rendimiento</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">km/gal</div>
-        </div>
-        <div class="stat-card" id="stat-costo-km">
-          <div class="stat-label">Costo por Kilómetro</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">COP/km</div>
-        </div>
-        <div class="stat-card" id="stat-precio-gal">
-          <div class="stat-label">Precio Promedio / Galón</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">COP</div>
-        </div>
-        <div class="stat-card" id="stat-total">
-          <div class="stat-label">Total Gastado</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">COP</div>
-        </div>
-        <div class="stat-card" id="stat-galones">
-          <div class="stat-label">Total Galones</div>
-          <div class="stat-value">--</div>
-          <div class="stat-unit">gal</div>
-        </div>
-        <div class="stat-card" id="stat-tanqueos">
-          <div class="stat-label">Tanqueos Registrados</div>
-          <div class="stat-value">0</div>
-          <div class="stat-unit">registros</div>
-        </div>
-      </div>
-    </section>
+    <!-- Pestañas -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="registro" role="tab" aria-selected="true" id="tab-btn-registro">📝 Registrar</button>
+      <button class="tab-btn" data-tab="dashboard" role="tab" aria-selected="false" id="tab-btn-dashboard">📊 Dashboard</button>
+    </div>
 
-    <!-- Formulario de Registro -->
-    <section id="registro" aria-label="Registrar tanqueo">
-      <div class="card">
-        <div class="card-header">
-          <h2>📝 Registrar Tanqueo</h2>
-          <button id="btn-cancel-edit" class="btn btn-secondary hidden">Cancelar edición</button>
-        </div>
-        <form id="form-tanqueo">
-          <input type="hidden" id="tanqueo-id">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="fecha">Fecha</label>
-              <input type="date" id="fecha" required>
-            </div>
-            <div class="form-group">
-              <label for="estacion">Estación de Servicio</label>
-              <input type="text" id="estacion" list="lista-estaciones" placeholder="Ej: Terpel, Primax..." required>
-              <datalist id="lista-estaciones"></datalist>
-            </div>
-            <div class="form-group">
-              <label for="combustible">Tipo de Combustible</label>
-              <select id="combustible">
-                <option value="Corriente">Corriente</option>
-                <option value="Extra">Extra</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="precio">Precio por Galón (COP)</label>
-              <input type="number" id="precio" min="0" step="1" placeholder="Ej: 14500" required>
-            </div>
-            <div class="form-group">
-              <label for="valorPagado">Valor Pagado (COP)</label>
-              <input type="number" id="valorPagado" min="0" step="1" placeholder="Ej: 120000" required>
-            </div>
-            <div class="form-group">
-              <label for="galones">Galones <small>(calculados automáticamente)</small></label>
-              <input type="text" id="galones" placeholder="---" readonly>
-            </div>
-            <div class="form-group">
-              <label for="odometro">Odómetro (km)</label>
-              <input type="number" id="odometro" min="0" step="1" placeholder="Ej: 45250" required>
-            </div>
-            <div class="form-group">
-              <label for="tanque-lleno">¿Tanque Lleno?</label>
-              <select id="tanque-lleno">
-                <option value="2">Sí, tanque lleno</option>
-                <option value="1">No, tanque parcial</option>
-              </select>
-            </div>
-            <div class="form-group form-group-full">
-              <label for="notas">Notas (opcional)</label>
-              <textarea id="notas" rows="2" placeholder="Comentarios adicionales..."></textarea>
-            </div>
+    <!-- ===== Pestaña: Registrar ===== -->
+    <div id="tab-registro" class="tab-panel active">
+
+      <!-- Panel de Estadísticas -->
+      <section id="stats-panel" aria-label="Estadísticas">
+        <div class="stats-grid">
+          <div class="stat-card" id="stat-rendimiento">
+            <div class="stat-label">Rendimiento Promedio</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">km/gal</div>
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary" id="btn-submit">💾 Guardar Tanqueo</button>
-            <button type="reset" class="btn btn-secondary" id="btn-reset">Limpiar</button>
+          <div class="stat-card" id="stat-mejor">
+            <div class="stat-label">Mejor Rendimiento</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">km/gal</div>
           </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- Indicador de Rendimiento del Último Tanqueo -->
-    <section id="ultimo-rendimiento" class="hidden" aria-label="Último rendimiento calculado">
-      <div class="card highlight-card">
-        <div class="highlight-info">
-          <div class="highlight-label">ÚLTIMO RENDIMIENTO CALCULADO</div>
-          <div class="highlight-value" id="ultimo-rendimiento-valor">--</div>
-          <div class="highlight-detail" id="ultimo-rendimiento-detalle"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Filtros -->
-    <section id="filtros" class="hidden" aria-label="Filtros del historial">
-      <div class="card">
-        <div class="filter-group">
-          <label for="filtro-estacion">Filtrar por estación:</label>
-          <select id="filtro-estacion">
-            <option value="">Todas</option>
-          </select>
-          <label for="filtro-combustible">Combustible:</label>
-          <select id="filtro-combustible">
-            <option value="">Todos</option>
-            <option value="Corriente">Corriente</option>
-            <option value="Extra">Extra</option>
-          </select>
-        </div>
-      </div>
-    </section>
-
-    <!-- Historial -->
-    <section id="historial" aria-label="Historial de tanqueos">
-      <div class="card">
-        <div class="card-header">
-          <h2>📋 Historial de Tanqueos</h2>
-          <span id="historial-count" class="badge">0 registros</span>
-        </div>
-        <div class="table-wrapper">
-          <table id="tabla-tanqueos">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Estación</th>
-                <th>Combustible</th>
-                <th>Galones</th>
-                <th>Valor Pagado</th>
-                <th>Odómetro</th>
-                <th>Rendimiento</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-body">
-              <!-- Filas generadas por JavaScript -->
-            </tbody>
-          </table>
-          <div id="tabla-vacia" class="empty-state">
-            <p>📭 No hay tanqueos registrados todavía.</p>
-            <p>Registra tu primer tanqueo para comenzar.</p>
+          <div class="stat-card" id="stat-costo-km">
+            <div class="stat-label">Costo por Kilómetro</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP/km</div>
+          </div>
+          <div class="stat-card" id="stat-precio-gal">
+            <div class="stat-label">Precio Promedio / Galón</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP</div>
+          </div>
+          <div class="stat-card" id="stat-total">
+            <div class="stat-label">Total Gastado</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP</div>
+          </div>
+          <div class="stat-card" id="stat-galones">
+            <div class="stat-label">Total Galones</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">gal</div>
+          </div>
+          <div class="stat-card" id="stat-tanqueos">
+            <div class="stat-label">Tanqueos Registrados</div>
+            <div class="stat-value">0</div>
+            <div class="stat-unit">registros</div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Gráfico -->
-    <section id="grafico" aria-label="Gráfico de rendimiento">
-      <div class="card">
-        <div class="card-header">
-          <h2>📈 Evolución del Rendimiento</h2>
+      <!-- Formulario de Registro -->
+      <section id="registro" aria-label="Registrar tanqueo">
+        <div class="card">
+          <div class="card-header">
+            <h2>📝 Registrar Tanqueo</h2>
+            <button id="btn-cancel-edit" class="btn btn-secondary hidden">Cancelar edición</button>
+          </div>
+          <form id="form-tanqueo">
+            <input type="hidden" id="tanqueo-id">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" required>
+              </div>
+              <div class="form-group">
+                <label for="estacion">Estación de Servicio</label>
+                <input type="text" id="estacion" list="lista-estaciones" placeholder="Ej: Terpel, Primax..." required>
+                <datalist id="lista-estaciones"></datalist>
+              </div>
+              <div class="form-group">
+                <label for="combustible">Tipo de Combustible</label>
+                <select id="combustible">
+                  <option value="Corriente">Corriente</option>
+                  <option value="Extra">Extra</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="precio">Precio por Galón (COP)</label>
+                <input type="number" id="precio" min="0" step="1" placeholder="Ej: 14500" required>
+              </div>
+              <div class="form-group">
+                <label for="valorPagado">Valor Pagado (COP)</label>
+                <input type="number" id="valorPagado" min="0" step="1" placeholder="Ej: 120000" required>
+              </div>
+              <div class="form-group">
+                <label for="galones">Galones <small>(calculados automáticamente)</small></label>
+                <input type="text" id="galones" placeholder="---" readonly>
+              </div>
+              <div class="form-group">
+                <label for="odometro">Odómetro (km)</label>
+                <input type="number" id="odometro" min="0" step="1" placeholder="Ej: 45250" required>
+              </div>
+              <div class="form-group">
+                <label>¿Tanque Lleno?</label>
+                <input type="hidden" id="tanque-lleno" value="1">
+                <div class="toggle-group" id="toggle-tanque-lleno">
+                  <button type="button" class="toggle-btn toggle-full" data-valor="2" title="Tanque lleno">
+                    <span class="toggle-icon">⛽</span>
+                    <span class="toggle-text">Lleno</span>
+                  </button>
+                  <button type="button" class="toggle-btn toggle-parcial active" data-valor="1" title="Tanque parcial">
+                    <span class="toggle-icon">🛢️</span>
+                    <span class="toggle-text">Parcial</span>
+                  </button>
+                </div>
+              </div>
+              <div class="form-group form-group-full">
+                <label for="notas">Notas (opcional)</label>
+                <textarea id="notas" rows="2" placeholder="Comentarios adicionales..."></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="btn-submit">💾 Guardar Tanqueo</button>
+              <button type="reset" class="btn btn-secondary" id="btn-reset">Limpiar</button>
+            </div>
+          </form>
         </div>
-        <div class="chart-container">
-          <canvas id="chart-rendimiento"></canvas>
+      </section>
+
+      <!-- Indicador de Rendimiento del Último Tanqueo -->
+      <section id="ultimo-rendimiento" class="hidden" aria-label="Último rendimiento calculado">
+        <div class="card highlight-card">
+          <div class="highlight-info">
+            <div class="highlight-label">ÚLTIMO RENDIMIENTO CALCULADO</div>
+            <div class="highlight-value" id="ultimo-rendimiento-valor">--</div>
+            <div class="highlight-detail" id="ultimo-rendimiento-detalle"></div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+    </div>
+
+    <!-- ===== Pestaña: Dashboard ===== -->
+    <div id="tab-dashboard" class="tab-panel">
+
+      <!-- Análisis por Estación -->
+      <section id="dashboard-estaciones" aria-label="Análisis por estación de servicio">
+        <div class="dashboard-grid">
+          <div class="card dashboard-card" id="card-mas-rendidora">
+            <div class="dashboard-card-header">🏆</div>
+            <div class="dashboard-card-title">Estación Más Rendidora</div>
+            <div class="dashboard-card-value" id="dash-rendidora">--</div>
+            <div class="dashboard-card-detail" id="dash-rendidora-detalle">Registra 2+ tanqueos llenos</div>
+          </div>
+          <div class="card dashboard-card" id="card-mejor-costo">
+            <div class="dashboard-card-header">💰</div>
+            <div class="dashboard-card-title">Mejor Costo-Beneficio</div>
+            <div class="dashboard-card-value" id="dash-costo">--</div>
+            <div class="dashboard-card-detail" id="dash-costo-detalle">Sin datos suficientes</div>
+          </div>
+          <div class="card dashboard-card" id="card-mas-economico">
+            <div class="dashboard-card-header">💵</div>
+            <div class="dashboard-card-title">Galón Más Económico</div>
+            <div class="dashboard-card-value" id="dash-economico">--</div>
+            <div class="dashboard-card-detail" id="dash-economico-detalle">Sin datos suficientes</div>
+          </div>
+        </div>
+
+        <div class="card" id="tabla-estaciones-card">
+          <div class="card-header">
+            <h2>📊 Comparativa por Estación</h2>
+          </div>
+          <div class="table-wrapper">
+            <table id="tabla-estaciones" class="responsive-table">
+              <thead>
+                <tr>
+                  <th>Estación</th>
+                  <th>Tanqueos</th>
+                  <th>Rend. Promedio</th>
+                  <th>km / $10.000</th>
+                  <th>Precio Promedio</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-estaciones-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filtros -->
+      <section id="filtros" class="hidden" aria-label="Filtros del historial">
+        <div class="card">
+          <div class="filter-group">
+            <label for="filtro-estacion">Filtrar por estación:</label>
+            <select id="filtro-estacion">
+              <option value="">Todas</option>
+            </select>
+            <label for="filtro-combustible">Combustible:</label>
+            <select id="filtro-combustible">
+              <option value="">Todos</option>
+              <option value="Corriente">Corriente</option>
+              <option value="Extra">Extra</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Historial -->
+      <section id="historial" aria-label="Historial de tanqueos">
+        <div class="card">
+          <div class="card-header">
+            <h2>📋 Historial de Tanqueos</h2>
+            <span id="historial-count" class="badge">0 registros</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="tabla-tanqueos" class="responsive-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Estación</th>
+                  <th>Combustible</th>
+                  <th>Galones</th>
+                  <th>Valor Pagado</th>
+                  <th>Odómetro</th>
+                  <th>Rendimiento</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-body">
+                <!-- Filas generadas por JavaScript -->
+              </tbody>
+            </table>
+            <div id="tabla-vacia" class="empty-state">
+              <p>📭 No hay tanqueos registrados todavía.</p>
+              <p>Registra tu primer tanqueo para comenzar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gráfico -->
+      <section id="grafico" aria-label="Gráfico de rendimiento">
+        <div class="card">
+          <div class="card-header">
+            <h2>📈 Evolución del Rendimiento</h2>
+          </div>
+          <div class="chart-container">
+            <canvas id="chart-rendimiento"></canvas>
+          </div>
+        </div>
+      </section>
+
+    </div>
 
   </main>
 
