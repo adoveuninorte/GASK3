@@ -740,12 +740,177 @@ footer {
 
   /* Botones de acciones en tabla más fáciles de tocar */
   .btn-sm {
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 1rem;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
   }
 
   .acciones {
     white-space: nowrap;
+  }
+
+  /* Vista de tarjetas para la tabla en móvil */
+  .table-wrapper {
+    overflow-x: visible;
+    border-radius: 0;
+  }
+
+  table#tabla-tanqueos,
+  table#tabla-tanqueos tbody,
+  table#tabla-tanqueos tr,
+  table#tabla-tanqueos td {
+    display: block;
+    width: 100%;
+  }
+
+  table#tabla-tanqueos {
+    min-width: 0;
+  }
+
+  table#tabla-tanqueos thead {
+    display: none;
+  }
+
+  table#tabla-tanqueos tbody tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  table#tabla-tanqueos tbody tr:hover {
+    background: var(--bg-card);
+  }
+
+  table#tabla-tanqueos tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--border);
+    font-size: 0.9rem;
+    gap: 12px;
+  }
+
+  table#tabla-tanqueos tbody td:last-child {
+    border-bottom: none;
+  }
+
+  table#tabla-tanqueos tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    min-width: 90px;
+    text-align: left;
+  }
+
+  table#tabla-tanqueos tbody td.acciones::before {
+    content: 'Acciones';
+  }
+
+  table#tabla-tanqueos tbody td.acciones {
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 12px;
+    margin-top: 4px;
+  }
+
+  table#tabla-tanqueos tbody td .tag-combustible {
+    display: inline-block;
+  }
+
+  /* Campos de formulario con altura táctil cómoda */
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 14px 12px;
+    font-size: 1rem;
+    min-height: 50px;
+  }
+
+  .form-group textarea {
+    min-height: 80px;
+  }
+
+  /* Botones principales con altura táctil */
+  .btn:not(.btn-sm) {
+    min-height: 48px;
+    padding: 12px 18px;
+    font-size: 0.95rem;
+  }
+
+  /* Filtros con altura táctil cómoda */
+  .filter-group select {
+    min-height: 48px;
+  }
+
+  /* Modal como bottom-sheet en móvil */
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 20px 20px 0 0;
+    padding: 28px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes sheetUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal h3 {
+    text-align: center;
+    font-size: 1.1rem;
+  }
+
+  .modal p {
+    text-align: center;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    min-height: 52px;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Tarjetas de estadísticas con mejor área táctil */
+  .stat-card {
+    padding: 16px 10px;
+  }
+
+  .stat-value {
+    font-size: 1.35rem;
+  }
+
+  .stat-label {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Padding inferior para que el FAB no tape contenido */
+  main {
+    padding-bottom: 100px;
   }
 }
 
@@ -815,6 +980,45 @@ footer {
   .modal-actions .btn {
     width: 100%;
     padding: 12px;
+  }
+}
+
+/* ===== Botón flotante (FAB) ===== */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  border: none;
+  font-size: 2rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(243, 156, 18, 0.4);
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 24px rgba(243, 156, 18, 0.5);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .fab {
+    display: flex;
   }
 }
 

@@ -44,6 +44,7 @@ let tanqueoAEliminar = null;
 // Gráfico
 let chartRendimiento = null;
 const graficoSection = $('grafico');
+const fabAgregar = $('fab-agregar');
 
 // ===== Inicialización =====
 document.addEventListener('DOMContentLoaded', iniciar);
@@ -91,6 +92,13 @@ function registrarEventos() {
   btnModalEliminar.addEventListener('click', confirmarEliminacion);
   modalConfirmar.addEventListener('click', (e) => {
     if (e.target === modalConfirmar) cerrarModal();
+  });
+
+  // FAB: agregar tanqueo (móvil)
+  fabAgregar.addEventListener('click', () => {
+    cancelarEdicion();
+    $('registro').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    inputFecha.focus();
   });
 }
 
@@ -435,14 +443,14 @@ function renderizarTabla() {
 
     return `
       <tr>
-        <td>${formatearFechaLegible(t.fecha)}</td>
-        <td>${escapeHTML(t.estacion)}</td>
-        <td><span class="tag-combustible ${tagClass}">${escapeHTML(t.combustible)}</span></td>
-        <td>${formatearNumero(t.galones, 2)}</td>
-        <td>${formatearCOP(t.costo)}</td>
-        <td>${formatearNumero(t.odometro, 0)} km</td>
-        <td>${rendimientoHTML}</td>
-        <td class="acciones">
+        <td data-label="Fecha">${formatearFechaLegible(t.fecha)}</td>
+        <td data-label="Estación">${escapeHTML(t.estacion)}</td>
+        <td data-label="Combustible"><span class="tag-combustible ${tagClass}">${escapeHTML(t.combustible)}</span></td>
+        <td data-label="Galones">${formatearNumero(t.galones, 2)}</td>
+        <td data-label="Valor Pagado">${formatearCOP(t.costo)}</td>
+        <td data-label="Odómetro">${formatearNumero(t.odometro, 0)} km</td>
+        <td data-label="Rendimiento">${rendimientoHTML}</td>
+        <td class="acciones" data-label="">
           <button class="btn btn-sm btn-edit" onclick="App.editar('${t.id}')" title="Editar">✏️</button>
           <button class="btn btn-sm btn-del" onclick="App.eliminar('${t.id}')" title="Eliminar">🗑️</button>
         </td>
