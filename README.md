@@ -45,7 +45,7 @@ git push -u origin main
 
 ## 💡 Uso
 
-1. **Registrar un tanqueo**: completa el formulario con fecha, estación, combustible, precio por galón (COP), **valor pagado en pesos colombianos**, odómetro y si fue tanque lleno o parcial.
+1. **Registrar un tanqueo**: completa el formulario con fecha, estación, combustible (Corriente o Extra), precio por galón (COP), **valor pagado en pesos colombianos**, odómetro y si fue tanque lleno o parcial.
    - Los **galones** se calculan automáticamente: `Valor pagado ÷ Precio por galón`.
    - El **rendimiento (km/gal)** se calcula comparando tanqueos con "tanque lleno".
 2. **Rendimiento**: se calcula automáticamente cuando hay dos tanqueos seguidos con "tanque lleno". Si hay tanqueos parciales entre tanqueos llenos, se suman los galones de todos los intermedios para un cálculo preciso.
@@ -58,6 +58,7 @@ git push -u origin main
    - Total galones
 4. **Exportar CSV**: botón en la cabecera para descargar todos los registros (compatible con Excel).
 5. **Tema oscuro**: botón 🌙/☀️ para alternar entre tema claro y oscuro.
+6. **Diseño responsive**: la aplicación se adapta automáticamente a teléfonos y tablets.
 
 ## 📁 Estructura del Proyecto
 

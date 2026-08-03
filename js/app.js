@@ -424,8 +424,7 @@ function renderizarTabla() {
   tablaBody.innerHTML = filtrados.map(t => {
     const tagClass = {
       'Corriente': 'tag-corriente',
-      'Extra': 'tag-extra',
-      'Diesel': 'tag-diesel'
+      'Extra': 'tag-extra'
     }[t.combustible] || 'tag-corriente';
 
     const rendimientoHTML = t.rendimiento !== null
