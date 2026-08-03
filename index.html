@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GASOLINA K3 — Registro de Consumo</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>⛽</text></svg>">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="container header-content">
+      <div class="logo">
+        <span class="logo-icon">⛽</span>
+        <h1>GASOLINA K3</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-theme" class="btn btn-icon" title="Cambiar tema">🌙</button>
+        <button id="btn-demo" class="btn btn-secondary">Datos de ejemplo</button>
+        <button id="btn-export" class="btn btn-primary">📥 Exportar CSV</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Panel de Estadísticas -->
+    <section id="stats-panel" aria-label="Estadísticas">
+      <div class="stats-grid">
+        <div class="stat-card" id="stat-rendimiento">
+          <div class="stat-label">Rendimiento Promedio</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">km/gal</div>
+        </div>
+        <div class="stat-card" id="stat-mejor">
+          <div class="stat-label">Mejor Rendimiento</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">km/gal</div>
+        </div>
+        <div class="stat-card" id="stat-costo-km">
+          <div class="stat-label">Costo por Kilómetro</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">COP/km</div>
+        </div>
+        <div class="stat-card" id="stat-precio-gal">
+          <div class="stat-label">Precio Promedio / Galón</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">COP</div>
+        </div>
+        <div class="stat-card" id="stat-total">
+          <div class="stat-label">Total Gastado</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">COP</div>
+        </div>
+        <div class="stat-card" id="stat-galones">
+          <div class="stat-label">Total Galones</div>
+          <div class="stat-value">--</div>
+          <div class="stat-unit">gal</div>
+        </div>
+        <div class="stat-card" id="stat-tanqueos">
+          <div class="stat-label">Tanqueos Registrados</div>
+          <div class="stat-value">0</div>
+          <div class="stat-unit">registros</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formulario de Registro -->
+    <section id="registro" aria-label="Registrar tanqueo">
+      <div class="card">
+        <div class="card-header">
+          <h2>📝 Registrar Tanqueo</h2>
+          <button id="btn-cancel-edit" class="btn btn-secondary hidden">Cancelar edición</button>
+        </div>
+        <form id="form-tanqueo">
+          <input type="hidden" id="tanqueo-id">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="fecha">Fecha</label>
+              <input type="date" id="fecha" required>
+            </div>
+            <div class="form-group">
+              <label for="estacion">Estación de Servicio</label>
+              <input type="text" id="estacion" list="lista-estaciones" placeholder="Ej: Terpel, Primax..." required>
+              <datalist id="lista-estaciones"></datalist>
+            </div>
+            <div class="form-group">
+              <label for="combustible">Tipo de Combustible</label>
+              <select id="combustible">
+                <option value="Corriente">Corriente</option>
+                <option value="Extra">Extra</option>
+                <option value="Diesel">Diesel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="precio">Precio por Galón (COP)</label>
+              <input type="number" id="precio" min="0" step="1" placeholder="Ej: 14500" required>
+            </div>
+            <div class="form-group">
+              <label for="valorPagado">Valor Pagado (COP)</label>
+              <input type="number" id="valorPagado" min="0" step="1" placeholder="Ej: 120000" required>
+            </div>
+            <div class="form-group">
+              <label for="galones">Galones <small>(calculados automáticamente)</small></label>
+              <input type="text" id="galones" placeholder="---" readonly>
+            </div>
+            <div class="form-group">
+              <label for="odometro">Odómetro (km)</label>
+              <input type="number" id="odometro" min="0" step="1" placeholder="Ej: 45250" required>
+            </div>
+            <div class="form-group">
+              <label for="tanque-lleno">¿Tanque Lleno?</label>
+              <select id="tanque-lleno">
+                <option value="2">Sí, tanque lleno</option>
+                <option value="1">No, tanque parcial</option>
+              </select>
+            </div>
+            <div class="form-group form-group-full">
+              <label for="notas">Notas (opcional)</label>
+              <textarea id="notas" rows="2" placeholder="Comentarios adicionales..."></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-submit">💾 Guardar Tanqueo</button>
+            <button type="reset" class="btn btn-secondary" id="btn-reset">Limpiar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Indicador de Rendimiento del Último Tanqueo -->
+    <section id="ultimo-rendimiento" class="hidden" aria-label="Último rendimiento calculado">
+      <div class="card highlight-card">
+        <div class="highlight-info">
+          <div class="highlight-label">ÚLTIMO RENDIMIENTO CALCULADO</div>
+          <div class="highlight-value" id="ultimo-rendimiento-valor">--</div>
+          <div class="highlight-detail" id="ultimo-rendimiento-detalle"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filtros -->
+    <section id="filtros" class="hidden" aria-label="Filtros del historial">
+      <div class="card">
+        <div class="filter-group">
+          <label for="filtro-estacion">Filtrar por estación:</label>
+          <select id="filtro-estacion">
+            <option value="">Todas</option>
+          </select>
+          <label for="filtro-combustible">Combustible:</label>
+          <select id="filtro-combustible">
+            <option value="">Todos</option>
+            <option value="Corriente">Corriente</option>
+            <option value="Extra">Extra</option>
+            <option value="Diesel">Diesel</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Historial -->
+    <section id="historial" aria-label="Historial de tanqueos">
+      <div class="card">
+        <div class="card-header">
+          <h2>📋 Historial de Tanqueos</h2>
+          <span id="historial-count" class="badge">0 registros</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="tabla-tanqueos">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Estación</th>
+                <th>Combustible</th>
+                <th>Galones</th>
+                <th>Valor Pagado</th>
+                <th>Odómetro</th>
+                <th>Rendimiento</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-body">
+              <!-- Filas generadas por JavaScript -->
+            </tbody>
+          </table>
+          <div id="tabla-vacia" class="empty-state">
+            <p>📭 No hay tanqueos registrados todavía.</p>
+            <p>Registra tu primer tanqueo para comenzar.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gráfico -->
+    <section id="grafico" aria-label="Gráfico de rendimiento">
+      <div class="card">
+        <div class="card-header">
+          <h2>📈 Evolución del Rendimiento</h2>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-rendimiento"></canvas>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>GASOLINA K3 — Hecho con ❤️ | Los datos se guardan localmente en tu navegador.</p>
+    </div>
+  </footer>
+
+  <!-- Modal de Confirmación -->
+  <div id="modal-confirmar" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>¿Eliminar este registro?</h3>
+      <p id="modal-mensaje"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="btn-modal-cancelar">Cancelar</button>
+        <button class="btn btn-danger" id="btn-modal-eliminar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
