@@ -58,7 +58,7 @@ git push -u origin main
    - Total galones
 4. **Exportar CSV**: botón en la cabecera para descargar todos los registros (compatible con Excel).
 5. **Tema oscuro**: botón 🌙/☀️ para alternar entre tema claro y oscuro.
-6. **Diseño responsive**: la aplicación se adapta automáticamente a teléfonos y tablets.
+6. **Diseño responsive**: la aplicación se adapta automáticamente a teléfonos y tablets, con una interfaz compacta que aprovecha el espacio en pantallas pequeñas (cabecera en una fila, estadísticas en cuadrícula, botones y controles táctiles, modal como bottom-sheet, botón flotante + para registrar).
 
 ## 📁 Estructura del Proyecto
 
