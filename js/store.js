@@ -158,6 +158,66 @@ const Store = {
   },
 
   /**
+   * Exporta toda la base de datos como objeto JSON.
+   * @returns {object} Objeto con tanqueos, estaciones, tema y metadatos
+   */
+  exportarJSON() {
+    return {
+      app: 'GASOLINA K3',
+      version: 1,
+      exportado: new Date().toISOString(),
+      tanqueos: this.cargarTanqueos(),
+      estaciones: this.cargarEstaciones(),
+      tema: this.cargarTema()
+    };
+  },
+
+  /**
+   * Restaura la base de datos desde un objeto JSON.
+   * @param {object} datos - Objeto exportado con exportarJSON()
+   * @returns {boolean} true si se restauró correctamente
+   */
+  importarJSON(datos) {
+    try {
+      if (!datos || typeof datos !== 'object') return false;
+
+      const tanqueos = Array.isArray(datos.tanqueos) ? datos.tanqueos : [];
+      const estaciones = Array.isArray(datos.estaciones) ? datos.estaciones : [];
+
+      // Validar estructura básica de cada tanqueo
+      const tanqueosValidos = tanqueos.filter(t =>
+        t && typeof t === 'object' && t.fecha && t.estacion
+      );
+
+      this.guardarTanqueos(tanqueosValidos);
+
+      // Normalizar estaciones: siempre incluir "Brio Melgar"
+      const listaEstaciones = estaciones.concat(['Brio Melgar']);
+      this.agregarEstaciones(listaEstaciones);
+
+      if (datos.tema === 'dark' || datos.tema === 'light') {
+        this.guardarTema(datos.tema);
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Error al importar JSON:', e);
+      return false;
+    }
+  },
+
+  /**
+   * Garantiza que exista una lista mínima de estaciones.
+   * Si la lista está vacía, agrega la estación predeterminada.
+   */
+  asegurarEstacionesIniciales() {
+    const lista = this.cargarEstaciones();
+    if (lista.length === 0) {
+      this.agregarEstaciones('Brio Melgar');
+    }
+  },
+
+  /**
    * Carga los datos de demostración.
    * @returns {Array} Tanqueos de ejemplo
    */

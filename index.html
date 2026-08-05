@@ -19,7 +19,10 @@
       <div class="header-actions">
         <button id="btn-theme" class="btn btn-icon" title="Cambiar tema">🌙</button>
         <button id="btn-demo" class="btn btn-secondary">Datos de ejemplo</button>
+        <button id="btn-export-json" class="btn btn-secondary" title="Descargar respaldo JSON">💾 Exportar JSON</button>
+        <button id="btn-import-json" class="btn btn-secondary" title="Restaurar respaldo JSON">📂 Importar JSON</button>
         <button id="btn-export" class="btn btn-primary">📥 Exportar CSV</button>
+        <input type="file" id="input-import-json" accept=".json,application/json" class="hidden">
       </div>
     </div>
   </header>
@@ -92,8 +95,10 @@
               </div>
               <div class="form-group">
                 <label for="estacion">Estación de Servicio</label>
-                <input type="text" id="estacion" list="lista-estaciones" placeholder="Ej: Terpel, Primax..." required>
-                <datalist id="lista-estaciones"></datalist>
+                <select id="estacion" required>
+                  <option value="">Selecciona una estación…</option>
+                </select>
+                <button type="button" id="btn-nueva-estacion" class="btn btn-secondary btn-sm" style="margin-top: 4px;">➕ Nueva estación…</button>
               </div>
               <div class="form-group">
                 <label for="combustible">Tipo de Combustible</label>
@@ -277,7 +282,7 @@
 
   <footer>
     <div class="container">
-      <p>GASOLINA K3 — Hecho con ❤️ | Los datos se guardan localmente en tu navegador.</p>
+      <p>GASOLINA K3 — Hecho con ❤️ | Los datos se guardan localmente en tu navegador. Usa 💾 Exportar JSON para respaldarlos.</p>
     </div>
   </footer>
 
@@ -289,6 +294,22 @@
       <div class="modal-actions">
         <button class="btn btn-secondary" id="btn-modal-cancelar">Cancelar</button>
         <button class="btn btn-danger" id="btn-modal-eliminar">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Nueva Estación -->
+  <div id="modal-nueva-estacion" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>➕ Nueva Estación de Servicio</h3>
+      <p>Escribe el nombre de la estación que deseas agregar.</p>
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="nueva-estacion-nombre">Nombre de la estación</label>
+        <input type="text" id="nueva-estacion-nombre" placeholder="Ej: Brio Melgar, Terpel, Primax…" maxlength="60">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="btn-nueva-estacion-cancelar">Cancelar</button>
+        <button class="btn btn-primary" id="btn-nueva-estacion-guardar">Guardar estación</button>
       </div>
     </div>
   </div>

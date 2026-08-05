@@ -6,7 +6,7 @@ const $ = (id) => document.getElementById(id);
 const formTanqueo = $('form-tanqueo');
 const inputId = $('tanqueo-id');
 const inputFecha = $('fecha');
-const inputEstacion = $('estacion');
+const selectEstacion = $('estacion');
 const inputCombustible = $('combustible');
 const inputPrecio = $('precio');
 const inputValorPagado = $('valorPagado');
@@ -18,6 +18,14 @@ const inputNotas = $('notas');
 const btnSubmit = $('btn-submit');
 const btnReset = $('btn-reset');
 const btnCancelEdit = $('btn-cancel-edit');
+const btnNuevaEstacion = $('btn-nueva-estacion');
+const modalNuevaEstacion = $('modal-nueva-estacion');
+const inputNuevaEstacion = $('nueva-estacion-nombre');
+const btnNuevaEstacionCancelar = $('btn-nueva-estacion-cancelar');
+const btnNuevaEstacionGuardar = $('btn-nueva-estacion-guardar');
+const btnExportJSON = $('btn-export-json');
+const btnImportJSON = $('btn-import-json');
+const inputImportJSON = $('input-import-json');
 
 const tablaBody = $('tabla-body');
 const tablaVacia = $('tabla-vacia');
@@ -66,7 +74,10 @@ const fabAgregar = $('fab-agregar');
 document.addEventListener('DOMContentLoaded', iniciar);
 
 function iniciar() {
-  // Cargar datos
+    // Garantizar estación inicial "Brio Melgar"
+  Store.asegurarEstacionesIniciales();
+
+// Cargar datos
   tanqueos = Store.cargarTanqueos();
   estaciones = Store.cargarEstaciones();
 
@@ -104,6 +115,25 @@ function registrarEventos() {
   // Filtros
   filtroEstacion.addEventListener('change', renderizarTabla);
   filtroCombustible.addEventListener('change', renderizarTabla);
+
+  // Nueva estación
+  btnNuevaEstacion.addEventListener('click', abrirModalNuevaEstacion);
+  btnNuevaEstacionCancelar.addEventListener('click', cerrarModalNuevaEstacion);
+  btnNuevaEstacionGuardar.addEventListener('click', guardarNuevaEstacion);
+  modalNuevaEstacion.addEventListener('click', (e) => {
+    if (e.target === modalNuevaEstacion) cerrarModalNuevaEstacion();
+  });
+  inputNuevaEstacion.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      guardarNuevaEstacion();
+    }
+  });
+
+  // Exportar / Importar JSON
+  btnExportJSON.addEventListener('click', exportarDatosJSON);
+  btnImportJSON.addEventListener('click', () => inputImportJSON.click());
+  inputImportJSON.addEventListener('change', importarDatosJSON);
 
   // Botones del header
   $('btn-theme').addEventListener('click', alternarTema);
@@ -148,6 +178,94 @@ function cambiarPestana(nombre) {
   }
 }
 
+// ===== Modal: Nueva Estación =====
+function abrirModalNuevaEstacion() {
+  inputNuevaEstacion.value = '';
+  modalNuevaEstacion.classList.remove('hidden');
+  setTimeout(() => inputNuevaEstacion.focus(), 100);
+}
+
+function cerrarModalNuevaEstacion() {
+  modalNuevaEstacion.classList.add('hidden');
+  inputNuevaEstacion.value = '';
+}
+
+function guardarNuevaEstacion() {
+  const nombre = inputNuevaEstacion.value.trim();
+  if (!nombre) {
+    mostrarToast('Escribe el nombre de la estación', 'error');
+    inputNuevaEstacion.focus();
+    return;
+  }
+
+  Store.agregarEstaciones(nombre);
+  estaciones = Store.cargarEstaciones();
+  actualizarSelectEstaciones();
+  actualizarFiltros();
+  selectEstacion.value = nombre;
+  cerrarModalNuevaEstacion();
+  mostrarToast('Estación "' + nombre + '" agregada', 'success');
+}
+
+// ===== Select de estaciones =====
+function actualizarSelectEstaciones() {
+  const valorActual = selectEstacion.value;
+  selectEstacion.innerHTML = '<option value="">Selecciona una estación…</option>';
+  estaciones.forEach(est => {
+    const option = document.createElement('option');
+    option.value = est;
+    option.textContent = est;
+    selectEstacion.appendChild(option);
+  });
+  if (estaciones.includes(valorActual)) {
+    selectEstacion.value = valorActual;
+  }
+}
+
+// ===== Exportar / Importar JSON =====
+function exportarDatosJSON() {
+  const datos = Store.exportarJSON();
+  const contenido = JSON.stringify(datos, null, 2);
+  const blob = new Blob([contenido], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gasolinak3_datos_' + obtenerFechaHoy() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  mostrarToast('Base de datos exportada (JSON)', 'success');
+}
+
+function importarDatosJSON(e) {
+  const archivo = e.target.files && e.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+  lector.onload = (evento) => {
+    try {
+      const datos = JSON.parse(evento.target.result);
+      const ok = Store.importarJSON(datos);
+      if (ok) {
+        tanqueos = Store.cargarTanqueos();
+        estaciones = Store.cargarEstaciones();
+        aplicarTemaGuardado();
+        actualizarInterfaz();
+        mostrarToast('Datos importados correctamente (' + tanqueos.length + ' tanqueos)', 'success');
+      } else {
+        mostrarToast('El archivo JSON no es válido', 'error');
+      }
+    } catch (err) {
+      console.error('Error al importar JSON:', err);
+      mostrarToast('No se pudo leer el archivo JSON', 'error');
+    }
+  };
+  lector.readAsText(archivo);
+  e.target.value = '';
+}
+
+// ===== Actualizar interfaz para usar actualizarSelectEstaciones =====
 // ===== Toggle Tanque Lleno =====
 function setTanqueLlenoValor(valor) {
   hiddenTanqueLleno.value = String(valor);
@@ -182,9 +300,9 @@ function manejarEnvioFormulario(e) {
     mostrarToast('Debes seleccionar una fecha', 'error');
     return;
   }
-  if (!inputEstacion.value.trim()) {
+  if (!selectEstacion.value.trim()) {
     mostrarToast('Debes escribir la estación de servicio', 'error');
-    inputEstacion.focus();
+    selectEstacion.focus();
     return;
   }
   if (!precio || precio <= 0) {
@@ -207,7 +325,7 @@ function manejarEnvioFormulario(e) {
     // Actualizar tanqueo existente
     const actualizado = Store.actualizarTanqueo(tanqueoEnEdicion.id, {
       fecha: inputFecha.value,
-      estacion: inputEstacion.value.trim(),
+      estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
       galones: valorPagado / precio,
@@ -227,7 +345,7 @@ function manejarEnvioFormulario(e) {
     // Crear nuevo tanqueo
     Store.agregarTanqueo({
       fecha: inputFecha.value,
-      estacion: inputEstacion.value.trim(),
+      estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
       galones: valorPagado / precio,
@@ -242,7 +360,7 @@ function manejarEnvioFormulario(e) {
   }
 
   // Guardar estaciones nuevas
-  Store.agregarEstaciones(inputEstacion.value.trim());
+  Store.agregarEstaciones(selectEstacion.value.trim());
 
   // Recargar interfaz completa
   refrecarDatos();
@@ -269,7 +387,7 @@ function comenzarEdicion(id) {
   tanqueoEnEdicion = tanqueo;
   inputId.value = tanqueo.id;
   inputFecha.value = tanqueo.fecha;
-  inputEstacion.value = tanqueo.estacion;
+  selectEstacion.value = tanqueo.estacion;
   inputCombustible.value = tanqueo.combustible;
   inputPrecio.value = tanqueo.precio;
   inputValorPagado.value = tanqueo.costo;
@@ -344,7 +462,7 @@ function refrecarDatos() {
 
 // ===== Actualizar toda la interfaz =====
 function actualizarInterfaz() {
-  actualizarDatalistEstaciones();
+  actualizarSelectEstaciones();
   actualizarFiltros();
   actualizarEstadisticas();
   actualizarUltimoRendimiento();
@@ -354,16 +472,7 @@ function actualizarInterfaz() {
   actualizarVisibilidadSecciones();
 }
 
-// ===== Actualizar datalist de estaciones =====
-function actualizarDatalistEstaciones() {
-  const datalist = $('lista-estaciones');
-  datalist.innerHTML = '';
-  estaciones.forEach(est => {
-    const option = document.createElement('option');
-    option.value = est;
-    datalist.appendChild(option);
-  });
-}
+
 
 // ===== Actualizar filtros =====
 function actualizarFiltros() {
@@ -870,7 +979,12 @@ window.App = {
 
 // Escaper de teclado para cerrar modal
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !modalConfirmar.classList.contains('hidden')) {
-    cerrarModal();
+  if (e.key === 'Escape') {
+    if (!modalConfirmar.classList.contains('hidden')) {
+      cerrarModal();
+    }
+    if (!modalNuevaEstacion.classList.contains('hidden')) {
+      cerrarModalNuevaEstacion();
+    }
   }
 });
