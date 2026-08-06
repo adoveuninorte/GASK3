@@ -356,6 +356,16 @@ section {
   margin-top: 2px;
 }
 
+.stat-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .stat-card[data-positive] .stat-value { color: var(--success); }
 .stat-card[data-warning] .stat-value { color: var(--primary-dark); }
 

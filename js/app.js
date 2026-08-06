@@ -569,6 +569,24 @@ function actualizarEstadisticas() {
   setStat('total', totalGastado > 0 ? formatearCOP(totalGastado) : '--', null, 'COP');
   setStat('galones', totalGalones > 0 ? formatearNumero(totalGalones, 2) : '--', null, 'gal');
   setStat('tanqueos', String(tanqueos.length), null, 'registros');
+
+  // Mejor precio de gasolina registrado (el más bajo, con su estación)
+  const conPrecioRegistrado = tanqueos.filter(t => (t.precio || 0) > 0);
+  const mejorPrecio = conPrecioRegistrado.length > 0
+    ? conPrecioRegistrado.reduce((a, b) => ((a.precio || 0) <= (b.precio || 0) ? a : b))
+    : null;
+
+  const statMejorPrecio = $('stat-mejor-precio');
+  if (statMejorPrecio) {
+    statMejorPrecio.querySelector('.stat-value').textContent =
+      mejorPrecio ? formatearCOP(mejorPrecio.precio) : '--';
+    const detalleMejorPrecio = $('mejor-precio-estacion');
+    if (detalleMejorPrecio) {
+      detalleMejorPrecio.textContent = mejorPrecio
+        ? `En ${mejorPrecio.estacion} · ${formatearFechaLegible(mejorPrecio.fecha)}`
+        : 'Sin registros';
+    }
+  }
 }
 
 // ===== Actualizar último rendimiento =====

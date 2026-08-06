@@ -48,43 +48,19 @@
     <!-- ===== Pestaña: Registrar ===== -->
     <div id="tab-registro" class="tab-panel active">
 
-      <!-- Panel de Estadísticas -->
-      <section id="stats-panel" aria-label="Estadísticas">
+      <!-- Destacados: mejor rendimiento y mejor precio registrado -->
+      <section id="destacados" aria-label="Destacados">
         <div class="stats-grid">
-          <div class="stat-card" id="stat-rendimiento">
-            <div class="stat-label">Rendimiento Promedio</div>
-            <div class="stat-value">--</div>
-            <div class="stat-unit">km/gal</div>
-          </div>
           <div class="stat-card" id="stat-mejor">
             <div class="stat-label">Mejor Rendimiento</div>
             <div class="stat-value">--</div>
             <div class="stat-unit">km/gal</div>
           </div>
-          <div class="stat-card" id="stat-costo-km">
-            <div class="stat-label">Costo por Kilómetro</div>
+          <div class="stat-card" id="stat-mejor-precio">
+            <div class="stat-label">Mejor Precio de Gasolina</div>
             <div class="stat-value">--</div>
-            <div class="stat-unit">COP/km</div>
-          </div>
-          <div class="stat-card" id="stat-precio-gal">
-            <div class="stat-label">Precio Promedio / Galón</div>
-            <div class="stat-value">--</div>
-            <div class="stat-unit">COP</div>
-          </div>
-          <div class="stat-card" id="stat-total">
-            <div class="stat-label">Total Gastado</div>
-            <div class="stat-value">--</div>
-            <div class="stat-unit">COP</div>
-          </div>
-          <div class="stat-card" id="stat-galones">
-            <div class="stat-label">Total Galones</div>
-            <div class="stat-value">--</div>
-            <div class="stat-unit">gal</div>
-          </div>
-          <div class="stat-card" id="stat-tanqueos">
-            <div class="stat-label">Tanqueos Registrados</div>
-            <div class="stat-value">0</div>
-            <div class="stat-unit">registros</div>
+            <div class="stat-unit">COP / galón</div>
+            <div class="stat-detail" id="mejor-precio-estacion">Sin registros</div>
           </div>
         </div>
       </section>
@@ -160,6 +136,98 @@
         </div>
       </section>
 
+      <!-- Filtros -->
+      <section id="filtros" class="hidden" aria-label="Filtros del historial">
+        <div class="card">
+          <div class="filter-group">
+            <label for="filtro-estacion">Filtrar por estación:</label>
+            <select id="filtro-estacion">
+              <option value="">Todas</option>
+            </select>
+            <label for="filtro-combustible">Combustible:</label>
+            <select id="filtro-combustible">
+              <option value="">Todos</option>
+              <option value="Corriente">Corriente</option>
+              <option value="Extra">Extra</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tanqueos registrados -->
+      <section id="historial" aria-label="Tanqueos registrados">
+        <div class="card">
+          <div class="card-header">
+            <h2>📋 Tanqueos Registrados</h2>
+            <span id="historial-count" class="badge">0 registros</span>
+          </div>
+          <div class="table-wrapper">
+            <table id="tabla-tanqueos" class="responsive-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Estación</th>
+                  <th>Combustible</th>
+                  <th>Galones</th>
+                  <th>Valor Pagado</th>
+                  <th>Odómetro</th>
+                  <th>Rendimiento</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-body">
+                <!-- Filas generadas por JavaScript -->
+              </tbody>
+            </table>
+            <div id="tabla-vacia" class="empty-state">
+              <p>📭 No hay tanqueos registrados todavía.</p>
+              <p>Registra tu primer tanqueo para comenzar.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ===== Pestaña: Dashboard ===== -->
+    <div id="tab-dashboard" class="tab-panel">
+
+      <!-- Panel de Estadísticas -->
+      <section id="stats-panel" aria-label="Estadísticas">
+        <div class="stats-grid">
+          <div class="stat-card" id="stat-rendimiento">
+            <div class="stat-label">Rendimiento Promedio</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">km/gal</div>
+          </div>
+          <div class="stat-card" id="stat-costo-km">
+            <div class="stat-label">Costo por Kilómetro</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP/km</div>
+          </div>
+          <div class="stat-card" id="stat-precio-gal">
+            <div class="stat-label">Precio Promedio / Galón</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP</div>
+          </div>
+          <div class="stat-card" id="stat-total">
+            <div class="stat-label">Total Gastado</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">COP</div>
+          </div>
+          <div class="stat-card" id="stat-galones">
+            <div class="stat-label">Total Galones</div>
+            <div class="stat-value">--</div>
+            <div class="stat-unit">gal</div>
+          </div>
+          <div class="stat-card" id="stat-tanqueos">
+            <div class="stat-label">Tanqueos Registrados</div>
+            <div class="stat-value">0</div>
+            <div class="stat-unit">registros</div>
+          </div>
+        </div>
+      </section>
+
       <!-- Indicador de Rendimiento del Último Tanqueo -->
       <section id="ultimo-rendimiento" class="hidden" aria-label="Último rendimiento calculado">
         <div class="card highlight-card">
@@ -170,11 +238,6 @@
           </div>
         </div>
       </section>
-
-    </div>
-
-    <!-- ===== Pestaña: Dashboard ===== -->
-    <div id="tab-dashboard" class="tab-panel">
 
       <!-- Análisis por Estación -->
       <section id="dashboard-estaciones" aria-label="Análisis por estación de servicio">
@@ -216,57 +279,6 @@
               </thead>
               <tbody id="tabla-estaciones-body"></tbody>
             </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- Filtros -->
-      <section id="filtros" class="hidden" aria-label="Filtros del historial">
-        <div class="card">
-          <div class="filter-group">
-            <label for="filtro-estacion">Filtrar por estación:</label>
-            <select id="filtro-estacion">
-              <option value="">Todas</option>
-            </select>
-            <label for="filtro-combustible">Combustible:</label>
-            <select id="filtro-combustible">
-              <option value="">Todos</option>
-              <option value="Corriente">Corriente</option>
-              <option value="Extra">Extra</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- Historial -->
-      <section id="historial" aria-label="Historial de tanqueos">
-        <div class="card">
-          <div class="card-header">
-            <h2>📋 Historial de Tanqueos</h2>
-            <span id="historial-count" class="badge">0 registros</span>
-          </div>
-          <div class="table-wrapper">
-            <table id="tabla-tanqueos" class="responsive-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Estación</th>
-                  <th>Combustible</th>
-                  <th>Galones</th>
-                  <th>Valor Pagado</th>
-                  <th>Odómetro</th>
-                  <th>Rendimiento</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-body">
-                <!-- Filas generadas por JavaScript -->
-              </tbody>
-            </table>
-            <div id="tabla-vacia" class="empty-state">
-              <p>📭 No hay tanqueos registrados todavía.</p>
-              <p>Registra tu primer tanqueo para comenzar.</p>
-            </div>
           </div>
         </div>
       </section>
