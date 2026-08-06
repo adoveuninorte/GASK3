@@ -87,10 +87,16 @@ const fabAgregar = $('fab-agregar');
 document.addEventListener('DOMContentLoaded', iniciar);
 
 async function iniciar() {
-  // Cargar datos (caché local, datos legacy o Supabase si ya está configurado)
-  const datos = await Store.cargarTodo();
-  tanqueos = datos.tanqueos;
-  estaciones = datos.estaciones;
+  // Cargar datos con respaldo seguro: aunque falle la carga, la app siempre responde
+  let datos = { tanqueos: [], estaciones: [] };
+  try {
+    datos = await Store.cargarTodo();
+  } catch (e) {
+    console.error('Error al cargar datos iniciales:', e);
+    mostrarToast('No se pudieron cargar los datos guardados. Se muestran valores vacíos.', 'error');
+  }
+  tanqueos = datos.tanqueos || [];
+  estaciones = datos.estaciones || [];
 
   // Fecha por defecto: hoy
   inputFecha.value = obtenerFechaHoy();
@@ -1081,6 +1087,8 @@ async function migrarDatosLocales() {
 }
 
 function abrirConfiguracionSupabase() {
+  // Si hay una carga en curso, ocultarla para que no tape la pantalla de configuración
+  ocultarLoading();
   const credenciales = AppConfig.obtenerCredenciales();
   if (credenciales) {
     configUrl.value = credenciales.url || '';

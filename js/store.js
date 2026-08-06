@@ -44,7 +44,12 @@ const Store = {
   async verificarConexion() {
     if (!supabase) return false;
     try {
-      const { error } = await supabase.from('tanqueos').select('id').limit(1);
+      const consulta = supabase.from('tanqueos').select('id').limit(1);
+      const { error } = await this._conTiempoMaximo(
+        consulta,
+        10000,
+        'Se agotó el tiempo de espera al contactar Supabase (10 s). Revisa tu conexión a internet.'
+      );
       if (error) throw error;
       this.ultimoError = null;
       return true;
@@ -53,6 +58,24 @@ const Store = {
       this.ultimoError = e;
       return false;
     }
+  },
+
+  /**
+   * Ejecuta una promesa con límite de tiempo para que la app nunca se quede
+   * colgada esperando una respuesta de red.
+   * @param {Promise} promesa
+   * @param {number} ms - Tiempo máximo en milisegundos
+   * @param {string} mensaje - Mensaje de error si se agota el tiempo
+   * @returns {Promise}
+   */
+  _conTiempoMaximo(promesa, ms, mensaje) {
+    let timeoutId = null;
+    const limite = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(mensaje)), ms);
+    });
+    return Promise.race([promesa, limite]).finally(() => {
+      if (timeoutId) clearTimeout(timeoutId);
+    });
   },
 
   // ===== Caché local (respaldo sin conexión) =====
@@ -135,11 +158,15 @@ const Store = {
       return cache ? this._ordenarTanqueos(cache) : [];
     }
     try {
-      const { data, error } = await supabase
-        .from('tanqueos')
-        .select('*')
-        .order('fecha', { ascending: true })
-        .order('odometro', { ascending: true });
+      const { data, error } = await this._conTiempoMaximo(
+        supabase
+          .from('tanqueos')
+          .select('*')
+          .order('fecha', { ascending: true })
+          .order('odometro', { ascending: true }),
+        10000,
+        'Se agotó el tiempo de espera al cargar los tanqueos desde Supabase.'
+      );
       if (error) throw error;
       const tanqueos = (data || []).map(f => this._mapearFilaSupabase(f));
       this._guardarCache(this.KEY_CACHE_TANQUEOS, tanqueos);
@@ -270,10 +297,14 @@ const Store = {
       return cache || [];
     }
     try {
-      const { data, error } = await supabase
-        .from('estaciones')
-        .select('nombre')
-        .order('nombre', { ascending: true });
+      const { data, error } = await this._conTiempoMaximo(
+        supabase
+          .from('estaciones')
+          .select('nombre')
+          .order('nombre', { ascending: true }),
+        10000,
+        'Se agotó el tiempo de espera al cargar las estaciones desde Supabase.'
+      );
       if (error) throw error;
       const estaciones = (data || []).map(e => e.nombre).filter(Boolean);
       this._guardarCache(this.KEY_CACHE_ESTACIONES, estaciones);
