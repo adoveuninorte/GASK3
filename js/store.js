@@ -1,7 +1,20 @@
 /* ===== GASOLINA K3 — Almacenamiento (Supabase + caché local) ===== */
 
 // Cliente Supabase (se inicializa con Store.conectar())
-let supabase = null;
+let clienteSupabase = null;
+
+/**
+ * Obtiene la función createClient de la librería supabase-js.
+ * Según la versión del bundle CDN puede estar expuesta como global
+ * (`createClient`) o dentro del objeto `window.supabase`.
+ * @returns {Function|null}
+ */
+function obtenerCreateClient() {
+  if (typeof createClient === 'function') return createClient;
+  const ns = (typeof window !== 'undefined') ? window.supabase : null;
+  if (ns && typeof ns.createClient === 'function') return ns.createClient;
+  return null;
+}
 
 const Store = {
   // Claves de localStorage
@@ -25,16 +38,24 @@ const Store = {
       this.conectado = false;
       return false;
     }
-    if (typeof createClient !== 'function') {
-      console.error('No se encontró el cliente de Supabase (supabase-js).');
+    const factory = obtenerCreateClient();
+    if (!factory) {
+      console.error('No se encontró la librería de supabase-js.');
       this.conectado = false;
-      this.ultimoError = new Error('No se cargó la librería de Supabase (supabase-js). Revisa tu conexión a internet o bloqueadores de scripts.');
+      this.ultimoError = new Error('No se cargó la librería de supabase-js. Revisa tu conexión a internet o bloqueadores de scripts.');
       return false;
     }
-    supabase = createClient(this.config.url, this.config.anonKey);
-    this.conectado = true;
-    this.ultimoError = null;
-    return true;
+    try {
+      clienteSupabase = factory(this.config.url, this.config.anonKey);
+      this.conectado = true;
+      this.ultimoError = null;
+      return true;
+    } catch (e) {
+      console.error('Error al crear el cliente de Supabase:', e);
+      this.conectado = false;
+      this.ultimoError = e;
+      return false;
+    }
   },
 
   /**
@@ -42,9 +63,9 @@ const Store = {
    * @returns {Promise<boolean>}
    */
   async verificarConexion() {
-    if (!supabase) return false;
+    if (!clienteSupabase) return false;
     try {
-      const consulta = supabase.from('tanqueos').select('id').limit(1);
+      const consulta = clienteSupabase.from('tanqueos').select('id').limit(1);
       const { error } = await this._conTiempoMaximo(
         consulta,
         10000,
@@ -153,13 +174,13 @@ const Store = {
    * @returns {Promise<Array>}
    */
   async cargarTanqueos() {
-    if (!supabase) {
+    if (!clienteSupabase) {
       const cache = this._cargarCache(this.KEY_CACHE_TANQUEOS);
       return cache ? this._ordenarTanqueos(cache) : [];
     }
     try {
       const { data, error } = await this._conTiempoMaximo(
-        supabase
+        clienteSupabase
           .from('tanqueos')
           .select('*')
           .order('fecha', { ascending: true })
@@ -199,7 +220,7 @@ const Store = {
       notas: tanqueo.notas || ''
     };
 
-    if (!supabase) {
+    if (!clienteSupabase) {
       // Modo local (sin configuración de Supabase)
       const lista = this.leerTanqueosLocales();
       lista.push(nuevo);
@@ -208,7 +229,7 @@ const Store = {
       return nuevo;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await clienteSupabase
       .from('tanqueos')
       .insert(this._mapearTanqueoParaDB(nuevo))
       .select()
@@ -229,7 +250,7 @@ const Store = {
    * @returns {Promise<object>} El tanqueo actualizado
    */
   async actualizarTanqueo(id, cambios) {
-    if (!supabase) {
+    if (!clienteSupabase) {
       // Modo local (sin configuración de Supabase)
       const lista = this.leerTanqueosLocales();
       const idx = lista.findIndex(t => t.id === id);
@@ -239,7 +260,7 @@ const Store = {
       this._guardarCache(this.KEY_CACHE_TANQUEOS, this._ordenarTanqueos(lista));
       return lista[idx];
     }
-    const { data, error } = await supabase
+    const { data, error } = await clienteSupabase
       .from('tanqueos')
       .update({
         fecha: cambios.fecha,
@@ -271,14 +292,14 @@ const Store = {
    * @returns {Promise<boolean>}
    */
   async eliminarTanqueo(id) {
-    if (!supabase) {
+    if (!clienteSupabase) {
       // Modo local (sin configuración de Supabase)
       const lista = this.leerTanqueosLocales().filter(t => t.id !== id);
       this._guardarTanqueosLocales(lista);
       this._guardarCache(this.KEY_CACHE_TANQUEOS, this._ordenarTanqueos(lista));
       return true;
     }
-    const { error } = await supabase.from('tanqueos').delete().eq('id', id);
+    const { error } = await clienteSupabase.from('tanqueos').delete().eq('id', id);
     if (error) throw error;
     const cache = this._cargarCache(this.KEY_CACHE_TANQUEOS) || [];
     this._guardarCache(this.KEY_CACHE_TANQUEOS, this._ordenarTanqueos(cache.filter(t => t.id !== id)));
@@ -292,13 +313,13 @@ const Store = {
    * @returns {Promise<Array>}
    */
   async cargarEstaciones() {
-    if (!supabase) {
+    if (!clienteSupabase) {
       const cache = this._cargarCache(this.KEY_CACHE_ESTACIONES);
       return cache || [];
     }
     try {
       const { data, error } = await this._conTiempoMaximo(
-        supabase
+        clienteSupabase
           .from('estaciones')
           .select('nombre')
           .order('nombre', { ascending: true }),
@@ -326,7 +347,7 @@ const Store = {
   async cargarTodo() {
     const [tanqueos, estaciones] = await Promise.all([this.cargarTanqueos(), this.cargarEstaciones()]);
     const conEstacionInicial = [...new Set([...estaciones, 'Brio Melgar'])].sort();
-    if (!supabase) {
+    if (!clienteSupabase) {
       // Sin configuración/Supabase: usar los datos de la versión anterior
       const locales = this.leerTanqueosLocales();
       const estLocal = this.leerEstacionesLocales();
@@ -344,7 +365,7 @@ const Store = {
    */
   async agregarEstaciones(estaciones) {
     const nombres = Array.isArray(estaciones) ? estaciones : [estaciones];
-    const actuales = supabase ? await this.cargarEstaciones() : this.leerEstacionesLocales();
+    const actuales = clienteSupabase ? await this.cargarEstaciones() : this.leerEstacionesLocales();
     const nuevos = [];
     nombres.forEach(nombre => {
       const limpio = String(nombre || '').trim();
@@ -352,7 +373,7 @@ const Store = {
     });
     if (nuevos.length === 0) return;
 
-    if (!supabase) {
+    if (!clienteSupabase) {
       // Modo local (sin configuración de Supabase)
       const lista = [...new Set([...this.leerEstacionesLocales(), ...nuevos])].sort();
       this._guardarEstacionesLocales(lista);
@@ -360,7 +381,7 @@ const Store = {
       return;
     }
 
-    const { error } = await supabase.from('estaciones').insert(nuevos.map(n => ({ nombre: n })));
+    const { error } = await clienteSupabase.from('estaciones').insert(nuevos.map(n => ({ nombre: n })));
     if (error) throw error;
 
     const cache = this._cargarCache(this.KEY_CACHE_ESTACIONES) || [];
@@ -415,15 +436,15 @@ const Store = {
       const estaciones = Array.isArray(datos.estaciones) ? datos.estaciones : [];
       const tanqueosValidos = tanqueos.filter(t => t && typeof t === 'object' && t.fecha && t.estacion);
 
-      const existentes = supabase ? await this.cargarTanqueos() : this.leerTanqueosLocales();
+      const existentes = clienteSupabase ? await this.cargarTanqueos() : this.leerTanqueosLocales();
       const idsExistentes = new Set(existentes.map(t => t.id));
       const nuevos = tanqueosValidos
         .map(t => ({ ...t, id: t.id || generarId() }))
         .filter(t => !idsExistentes.has(t.id));
 
       if (nuevos.length > 0) {
-        if (supabase) {
-          const { error } = await supabase.from('tanqueos').insert(nuevos.map(t => this._mapearTanqueoParaDB(t)));
+        if (clienteSupabase) {
+          const { error } = await clienteSupabase.from('tanqueos').insert(nuevos.map(t => this._mapearTanqueoParaDB(t)));
           if (error) throw error;
         } else {
           const lista = this.leerTanqueosLocales();
@@ -473,7 +494,7 @@ const Store = {
    * @returns {Promise<{migrados:number,total:number}>}
    */
   async migrarDatosLocales() {
-    if (!supabase) throw new Error('Sin conexión a Supabase. Revisa la configuración (⚙️).');
+    if (!clienteSupabase) throw new Error('Sin conexión a Supabase. Revisa la configuración (⚙️).');
     const locales = this.leerTanqueosLocales();
     const total = locales.length;
     let migrados = 0;
@@ -484,7 +505,7 @@ const Store = {
       const nuevos = locales.filter(t => t && !idsExistentes.has(t.id));
       migrados = nuevos.length;
       if (migrados > 0) {
-        const { error } = await supabase.from('tanqueos').insert(nuevos.map(t => this._mapearTanqueoParaDB(t)));
+        const { error } = await clienteSupabase.from('tanqueos').insert(nuevos.map(t => this._mapearTanqueoParaDB(t)));
         if (error) throw error;
       }
     }
