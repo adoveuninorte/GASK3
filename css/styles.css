@@ -428,18 +428,6 @@ header {
   font-size: 0.76rem;
 }
 
-/* Fila galones: campo editable + botón calcular */
-.galones-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.galones-row input {
-  flex: 1;
-  min-width: 0;
-}
-
 /* Acciones en la tabla: outline con color semántico */
 .btn-edit {
   background: transparent;

@@ -18,7 +18,6 @@ const toggleCombustible = $('toggle-combustible');
 const inputPrecio = $('precio');
 const inputValorPagado = $('valorPagado');
 const inputGalones = $('galones');
-const btnCalcularGalones = $('btn-calcular-galones');
 const inputOdometro = $('odometro');
 const hiddenTanqueLleno = $('tanque-lleno');
 const toggleTanqueLleno = $('toggle-tanque-lleno');
@@ -87,7 +86,7 @@ let tanqueos = [];
 let estaciones = [];
 let tanqueoEnEdicion = null;
 let tanqueoAEliminar = null;
-let galonesManual = false; // true si el usuario digitó los galones a mano
+let campoManual = null; // 'galones' | 'precio' | null — qué campo digitó el usuario
 
 // Gráfico
 let chartRendimiento = null;
@@ -132,13 +131,16 @@ function registrarEventos() {
   btnReset.addEventListener('click', limpiarFormulario);
   btnCancelEdit.addEventListener('click', cancelarEdicion);
 
-  // Galones: se calculan en vivo, pero el usuario puede escribirlos a mano
-  inputPrecio.addEventListener('input', () => recalcularCampos());
-  inputValorPagado.addEventListener('input', () => recalcularCampos());
-  inputGalones.addEventListener('input', () => {
-    galonesManual = inputGalones.value.trim() !== '';
+  // Cálculo en vivo: galones ↔ precio por galón (según cuál se digite)
+  inputPrecio.addEventListener('input', () => {
+    campoManual = 'precio';
+    recalcularCampos();
   });
-  btnCalcularGalones.addEventListener('click', () => recalcularCampos(true));
+  inputGalones.addEventListener('input', () => {
+    campoManual = 'galones';
+    recalcularCampos();
+  });
+  inputValorPagado.addEventListener('input', recalcularCampos);
 
   // Toggle Tanque Lleno / Parcial
   toggleTanqueLleno.addEventListener('click', (e) => {
@@ -349,19 +351,23 @@ function setCombustibleValor(valor) {
   });
 }
 
-// ===== Cálculo de galones =====
-function recalcularCampos(forzar = false) {
-  // Si el usuario escribió los galones a mano, respetamos su valor
-  if (!forzar && galonesManual) return;
-
+// ===== Cálculo automático galones ↔ precio =====
+function recalcularCampos() {
   const precio = parseFloat(inputPrecio.value);
   const valorPagado = parseFloat(inputValorPagado.value);
+  const galones = parseFloat(inputGalones.value);
 
+  // Si el usuario digitó los galones, el precio por galón se calcula solo
+  if (campoManual === 'galones') {
+    if (valorPagado > 0 && galones > 0) {
+      inputPrecio.value = (valorPagado / galones).toFixed(2);
+    }
+    return;
+  }
+
+  // Si el usuario digitó el precio (o nada), los galones se calculan solos
   if (precio > 0 && valorPagado > 0) {
     inputGalones.value = (valorPagado / precio).toFixed(3);
-    galonesManual = false;
-  } else if (forzar) {
-    mostrarToast('Escribe el precio y el valor pagado para calcular los galones', 'error');
   } else if (inputGalones.value !== '') {
     inputGalones.value = '';
   }
@@ -374,6 +380,7 @@ async function manejarEnvioFormulario(e) {
   // Validaciones
   const precio = parseFloat(inputPrecio.value);
   const valorPagado = parseFloat(inputValorPagado.value);
+  const galones = parseFloat(inputGalones.value);
   const odometro = parseFloat(inputOdometro.value);
 
   if (!inputFecha.value) {
@@ -385,19 +392,18 @@ async function manejarEnvioFormulario(e) {
     selectEstacion.focus();
     return;
   }
-  if (!precio || precio <= 0) {
-    mostrarToast('Debes ingresar un precio por galón válido', 'error');
-    inputPrecio.focus();
-    return;
-  }
   if (!valorPagado || valorPagado <= 0) {
     mostrarToast('Debes ingresar el valor pagado en pesos', 'error');
     inputValorPagado.focus();
     return;
   }
-  const galones = parseFloat(inputGalones.value);
+  if (!precio || precio <= 0) {
+    mostrarToast('Debes ingresar un precio por galón válido', 'error');
+    inputPrecio.focus();
+    return;
+  }
   if (!galones || galones <= 0) {
-    mostrarToast('Debes escribir o calcular los galones', 'error');
+    mostrarToast('Debes ingresar los galones', 'error');
     inputGalones.focus();
     return;
   }
@@ -457,7 +463,7 @@ function limpiarFormulario() {
   formTanqueo.reset();
   inputFecha.value = obtenerFechaHoy();
   inputGalones.value = '';
-  galonesManual = false;
+  campoManual = null;
   inputId.value = '';
   tanqueoEnEdicion = null;
   btnSubmit.innerHTML = '💾 Guardar Tanqueo';
@@ -480,7 +486,7 @@ function comenzarEdicion(id) {
   inputPrecio.value = tanqueo.precio;
   inputValorPagado.value = tanqueo.costo;
   inputGalones.value = tanqueo.galones.toFixed(3);
-  galonesManual = true;
+  campoManual = null;
   inputOdometro.value = tanqueo.odometro;
   setTanqueLlenoValor(Number(tanqueo.tanqueLleno) || 1);
   inputNotas.value = tanqueo.notas || '';
