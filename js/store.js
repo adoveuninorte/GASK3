@@ -335,34 +335,6 @@ const Store = {
     this._guardarCache(this.KEY_CACHE_ESTACIONES, [...new Set([...cache, ...nuevos])].sort());
   },
 
-  /**
-   * Reemplaza todos los tanqueos por la lista indicada (uso: datos de ejemplo).
-   * Si hay conexión con Supabase, reemplaza también la tabla remota.
-   * @param {Array} lista
-   * @returns {Promise<Array>} Los tanqueos guardados
-   */
-  async guardarTanqueos(lista) {
-    const tanqueos = (Array.isArray(lista) ? lista : [])
-      .filter(t => t && typeof t === 'object')
-      .map(t => ({ ...t, id: t.id || generarId() }));
-
-    if (supabase) {
-      const { error: errorBorrado } = await supabase.from('tanqueos').delete().neq('id', null);
-      if (errorBorrado) throw errorBorrado;
-      if (tanqueos.length > 0) {
-        const { error } = await supabase
-          .from('tanqueos')
-          .insert(tanqueos.map(t => this._mapearTanqueoParaDB(t)));
-        if (error) throw error;
-      }
-    } else {
-      this._guardarTanqueosLocales(tanqueos);
-    }
-
-    this._guardarCache(this.KEY_CACHE_TANQUEOS, this._ordenarTanqueos(tanqueos));
-    return tanqueos;
-  },
-
   /** Garantiza que exista al menos la estación "Brio Melgar". */
   async asegurarEstacionesIniciales() {
     const lista = await this.cargarEstaciones();
@@ -491,25 +463,4 @@ const Store = {
     return { migrados, total };
   },
 
-  /**
-   * Carga los datos de demostración.
-   * @returns {Array} Tanqueos de ejemplo
-   */
-  cargarDatosDemo() {
-    const hoy = new Date();
-    const hacerFecha = (diasAtras) => {
-      const f = new Date(hoy);
-      f.setDate(f.getDate() - diasAtras);
-      return f.toISOString().split('T')[0];
-    };
-
-    return [
-      { fecha: hacerFecha(28), estacion: 'Terpel - Autopista', combustible: 'Corriente', precio: 13200, galones: 8.5, costo: 112200, odometro: 45600, tanqueLleno: 2, notas: 'Tanqueo inicial — referencia de partida' },
-      { fecha: hacerFecha(21), estacion: 'Primax - 7ma', combustible: 'Corriente', precio: 13450, galones: 9.2, costo: 123740, odometro: 46480, tanqueLleno: 2, notas: 'Rendimiento: ~103.3 km/gal — viaje Bogotá-Villavicencio' },
-      { fecha: hacerFecha(14), estacion: 'Terpel - Centro', combustible: 'Extra', precio: 14900, galones: 10.0, costo: 149000, odometro: 47450, tanqueLleno: 2, notas: 'Cambio a Extra para comparar rendimiento' },
-      { fecha: hacerFecha(7), estacion: 'Primax - Autopista Norte', combustible: 'Extra', precio: 14800, galones: 8.8, costo: 130240, odometro: 48350, tanqueLleno: 2, notas: 'Rendimiento: ~102.3 km/gal — ciudad mayormente' },
-      { fecha: hacerFecha(2), estacion: 'Terpel - Aeropuerto', combustible: 'Corriente', precio: 13500, galones: 7.5, costo: 101250, odometro: 49100, tanqueLleno: 1, notas: 'Tanqueo parcial de emergencia' },
-      { fecha: hacerFecha(0), estacion: 'Primax - 7ma', combustible: 'Corriente', precio: 13600, galones: 9.0, costo: 122400, odometro: 50000, tanqueLleno: 2, notas: 'Tanque lleno. Calcula rendimiento vs. el anterior parcial + el lleno previo' }
-    ];
-  }
 };

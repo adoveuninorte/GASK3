@@ -151,7 +151,6 @@ function registrarEventos() {
   // Botones del header
   $('btn-theme').addEventListener('click', alternarTema);
   $('btn-export').addEventListener('click', exportarDatosCSV);
-  $('btn-demo').addEventListener('click', cargarDatosDemo);
 
   // Supabase
   btnMigrar.addEventListener('click', migrarDatosLocales);
@@ -444,20 +443,10 @@ function solicitarEliminacion(id) {
 function cerrarModal() {
   modalConfirmar.classList.add('hidden');
   tanqueoAEliminar = null;
-  // Restaurar el texto del botón si estaba en modo demo
-  btnModalEliminar.textContent = 'Eliminar';
 }
 
 async function confirmarEliminacion() {
   if (!tanqueoAEliminar) return;
-
-  // Modo demo: cargar datos de ejemplo
-  if (tanqueoAEliminar === '__DEMO_CONFIRM__') {
-    cerrarModal();
-    btnModalEliminar.textContent = 'Eliminar';
-    ejecutarCargaDemo();
-    return;
-  }
 
   const eliminado = await Store.eliminarTanqueo(tanqueoAEliminar);
   if (eliminado) {
@@ -941,29 +930,6 @@ function exportarDatosCSV() {
   const fechaHoy = obtenerFechaHoy();
   exportarCSV(encabezados, filas, `gasolinak3_tanqueos_${fechaHoy}.csv`);
   mostrarToast('CSV exportado correctamente', 'success');
-}
-
-// ===== Datos de demostración =====
-function cargarDatosDemo() {
-  if (tanqueos.length > 0) {
-    modalMensaje.textContent = '¿Cargar datos de ejemplo? Esto reemplazará todos tus registros actuales.';
-    tanqueoAEliminar = '__DEMO_CONFIRM__';
-    modalConfirmar.classList.remove('hidden');
-    btnModalEliminar.textContent = 'Cargar';
-    return;
-  }
-
-  ejecutarCargaDemo();
-}
-
-async function ejecutarCargaDemo() {
-  const datosDemo = Store.cargarDatosDemo();
-  await Store.guardarTanqueos(datosDemo);
-  // Agregar estaciones de la demo
-  const estacionesDemo = [...new Set(datosDemo.map(t => t.estacion))];
-  await Store.agregarEstaciones(estacionesDemo);
-  mostrarToast('Datos de ejemplo cargados', 'success');
-  await refrecarDatos();
 }
 
 // ===== Tema =====

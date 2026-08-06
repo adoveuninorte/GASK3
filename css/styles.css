@@ -983,7 +983,6 @@ footer {
     min-height: 36px;
   }
 
-  .header-actions #btn-demo,
   .header-actions #btn-export {
     display: none;
   }
