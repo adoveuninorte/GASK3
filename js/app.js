@@ -2,6 +2,12 @@
 
 // ===== Referencias al DOM =====
 const $ = (id) => document.getElementById(id);
+const hexToRgba = (hex, alpha) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 const formTanqueo = $('form-tanqueo');
 const inputId = $('tanqueo-id');
@@ -12,6 +18,7 @@ const toggleCombustible = $('toggle-combustible');
 const inputPrecio = $('precio');
 const inputValorPagado = $('valorPagado');
 const inputGalones = $('galones');
+const btnCalcularGalones = $('btn-calcular-galones');
 const inputOdometro = $('odometro');
 const hiddenTanqueLleno = $('tanque-lleno');
 const toggleTanqueLleno = $('toggle-tanque-lleno');
@@ -80,6 +87,7 @@ let tanqueos = [];
 let estaciones = [];
 let tanqueoEnEdicion = null;
 let tanqueoAEliminar = null;
+let galonesManual = false; // true si el usuario digitó los galones a mano
 
 // Gráfico
 let chartRendimiento = null;
@@ -124,9 +132,13 @@ function registrarEventos() {
   btnReset.addEventListener('click', limpiarFormulario);
   btnCancelEdit.addEventListener('click', cancelarEdicion);
 
-  // Calcular galones y costo en vivo
-  inputPrecio.addEventListener('input', recalcularCampos);
-  inputValorPagado.addEventListener('input', recalcularCampos);
+  // Galones: se calculan en vivo, pero el usuario puede escribirlos a mano
+  inputPrecio.addEventListener('input', () => recalcularCampos());
+  inputValorPagado.addEventListener('input', () => recalcularCampos());
+  inputGalones.addEventListener('input', () => {
+    galonesManual = inputGalones.value.trim() !== '';
+  });
+  btnCalcularGalones.addEventListener('click', () => recalcularCampos(true));
 
   // Toggle Tanque Lleno / Parcial
   toggleTanqueLleno.addEventListener('click', (e) => {
@@ -337,15 +349,20 @@ function setCombustibleValor(valor) {
   });
 }
 
-// ===== Cálculo automático de galones y costo =====
-function recalcularCampos() {
+// ===== Cálculo de galones =====
+function recalcularCampos(forzar = false) {
+  // Si el usuario escribió los galones a mano, respetamos su valor
+  if (!forzar && galonesManual) return;
+
   const precio = parseFloat(inputPrecio.value);
   const valorPagado = parseFloat(inputValorPagado.value);
 
   if (precio > 0 && valorPagado > 0) {
-    const galones = valorPagado / precio;
-    inputGalones.value = galones.toFixed(3);
-  } else {
+    inputGalones.value = (valorPagado / precio).toFixed(3);
+    galonesManual = false;
+  } else if (forzar) {
+    mostrarToast('Escribe el precio y el valor pagado para calcular los galones', 'error');
+  } else if (inputGalones.value !== '') {
     inputGalones.value = '';
   }
 }
@@ -378,6 +395,12 @@ async function manejarEnvioFormulario(e) {
     inputValorPagado.focus();
     return;
   }
+  const galones = parseFloat(inputGalones.value);
+  if (!galones || galones <= 0) {
+    mostrarToast('Debes escribir o calcular los galones', 'error');
+    inputGalones.focus();
+    return;
+  }
   if (!odometro || odometro < 0) {
     mostrarToast('Debes ingresar el odómetro en kilómetros', 'error');
     inputOdometro.focus();
@@ -391,7 +414,7 @@ async function manejarEnvioFormulario(e) {
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
-      galones: valorPagado / precio,
+      galones: galones,
       costo: valorPagado,
       odometro: odometro,
       tanqueLleno: Number(hiddenTanqueLleno.value) || 1,
@@ -411,7 +434,7 @@ async function manejarEnvioFormulario(e) {
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
-      galones: valorPagado / precio,
+      galones: galones,
       costo: valorPagado,
       odometro: odometro,
       tanqueLleno: Number(hiddenTanqueLleno.value) || 1,
@@ -434,6 +457,7 @@ function limpiarFormulario() {
   formTanqueo.reset();
   inputFecha.value = obtenerFechaHoy();
   inputGalones.value = '';
+  galonesManual = false;
   inputId.value = '';
   tanqueoEnEdicion = null;
   btnSubmit.innerHTML = '💾 Guardar Tanqueo';
@@ -456,6 +480,7 @@ function comenzarEdicion(id) {
   inputPrecio.value = tanqueo.precio;
   inputValorPagado.value = tanqueo.costo;
   inputGalones.value = tanqueo.galones.toFixed(3);
+  galonesManual = true;
   inputOdometro.value = tanqueo.odometro;
   setTanqueLlenoValor(Number(tanqueo.tanqueLleno) || 1);
   inputNotas.value = tanqueo.notas || '';
@@ -895,8 +920,11 @@ function renderizarGrafico() {
   const datos = puntos.map(p => p.rendimiento);
 
   const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
-  const colorTexto = esOscuro ? '#a0a8b8' : '#7f8c8d';
-  const colorBorde = esOscuro ? '#2a3a5c' : '#e0e6ed';
+  const colorTexto = esOscuro ? '#dfc0b2' : '#574237';
+  const colorBorde = esOscuro ? '#574237' : '#dfc0b2';
+  const colorPrimario = esOscuro ? '#b4c5ff' : '#475c99';
+  const colorSecundario = esOscuro ? '#bdcc9c' : '#56633b';
+  const colorFondo = esOscuro ? '#1b110b' : '#fff8f6';
 
   chartRendimiento = new Chart(ctx, {
     type: 'line',
@@ -905,12 +933,12 @@ function renderizarGrafico() {
       datasets: [{
         label: 'Rendimiento (km/gal)',
         data: datos,
-        borderColor: '#f39c12',
-        backgroundColor: 'rgba(243, 156, 18, 0.1)',
+        borderColor: colorPrimario,
+        backgroundColor: hexToRgba(colorPrimario, 0.18),
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#e67e22',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: colorSecundario,
+        pointBorderColor: colorFondo,
         pointBorderWidth: 2,
         pointRadius: 5,
         pointHoverRadius: 7
@@ -999,7 +1027,7 @@ function actualizarThemeColor() {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (!meta) return;
   const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
-  meta.setAttribute('content', oscuro ? '#16213e' : '#1a252f');
+  meta.setAttribute('content', oscuro ? '#1b110b' : '#fff8f6');
 }
 
 function aplicarTemaGuardado() {
