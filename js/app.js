@@ -26,6 +26,18 @@ const btnNuevaEstacionGuardar = $('btn-nueva-estacion-guardar');
 const btnExportJSON = $('btn-export-json');
 const btnImportJSON = $('btn-import-json');
 const inputImportJSON = $('input-import-json');
+const btnMigrar = $('btn-migrar');
+const btnConfig = $('btn-config');
+const syncStatus = $('sync-status');
+const loadingOverlay = $('loading-overlay');
+const loadingMensaje = $('loading-mensaje');
+const configOverlay = $('config-overlay');
+const configError = $('config-error');
+const configUrl = $('config-url');
+const configKey = $('config-key');
+const btnConfigGuardar = $('btn-config-guardar');
+const btnConfigCerrar = $('btn-config-cerrar');
+const btnConfigMasTarde = $('btn-config-mas-tarde');
 
 const tablaBody = $('tabla-body');
 const tablaVacia = $('tabla-vacia');
@@ -73,13 +85,11 @@ const fabAgregar = $('fab-agregar');
 // ===== Inicialización =====
 document.addEventListener('DOMContentLoaded', iniciar);
 
-function iniciar() {
-    // Garantizar estación inicial "Brio Melgar"
-  Store.asegurarEstacionesIniciales();
-
-// Cargar datos
-  tanqueos = Store.cargarTanqueos();
-  estaciones = Store.cargarEstaciones();
+async function iniciar() {
+  // Cargar datos (caché local, datos legacy o Supabase si ya está configurado)
+  const datos = await Store.cargarTodo();
+  tanqueos = datos.tanqueos;
+  estaciones = datos.estaciones;
 
   // Fecha por defecto: hoy
   inputFecha.value = obtenerFechaHoy();
@@ -92,6 +102,9 @@ function iniciar() {
 
   // Renderizar
   actualizarInterfaz();
+
+  // Inicializar Supabase (migración, sincronización y verificación)
+  await iniciarSupabase();
 }
 
 // ===== Registro de eventos =====
@@ -139,6 +152,16 @@ function registrarEventos() {
   $('btn-theme').addEventListener('click', alternarTema);
   $('btn-export').addEventListener('click', exportarDatosCSV);
   $('btn-demo').addEventListener('click', cargarDatosDemo);
+
+  // Supabase
+  btnMigrar.addEventListener('click', migrarDatosLocales);
+  btnConfig.addEventListener('click', abrirConfiguracionSupabase);
+  btnConfigGuardar.addEventListener('click', guardarConfiguracionSupabase);
+  btnConfigCerrar.addEventListener('click', cerrarConfiguracionSupabase);
+  btnConfigMasTarde.addEventListener('click', cerrarConfiguracionSupabase);
+  configOverlay.addEventListener('click', (e) => {
+    if (e.target === configOverlay) cerrarConfiguracionSupabase();
+  });
 
   // Modal
   btnModalCancelar.addEventListener('click', cerrarModal);
@@ -190,7 +213,7 @@ function cerrarModalNuevaEstacion() {
   inputNuevaEstacion.value = '';
 }
 
-function guardarNuevaEstacion() {
+async function guardarNuevaEstacion() {
   const nombre = inputNuevaEstacion.value.trim();
   if (!nombre) {
     mostrarToast('Escribe el nombre de la estación', 'error');
@@ -198,8 +221,8 @@ function guardarNuevaEstacion() {
     return;
   }
 
-  Store.agregarEstaciones(nombre);
-  estaciones = Store.cargarEstaciones();
+  await Store.agregarEstaciones(nombre);
+  estaciones = await Store.cargarEstaciones();
   actualizarSelectEstaciones();
   actualizarFiltros();
   selectEstacion.value = nombre;
@@ -223,8 +246,8 @@ function actualizarSelectEstaciones() {
 }
 
 // ===== Exportar / Importar JSON =====
-function exportarDatosJSON() {
-  const datos = Store.exportarJSON();
+async function exportarDatosJSON() {
+  const datos = await Store.exportarJSON();
   const contenido = JSON.stringify(datos, null, 2);
   const blob = new Blob([contenido], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -243,15 +266,13 @@ function importarDatosJSON(e) {
   if (!archivo) return;
 
   const lector = new FileReader();
-  lector.onload = (evento) => {
+  lector.onload = async (evento) => {
     try {
       const datos = JSON.parse(evento.target.result);
-      const ok = Store.importarJSON(datos);
+      const ok = await Store.importarJSON(datos);
       if (ok) {
-        tanqueos = Store.cargarTanqueos();
-        estaciones = Store.cargarEstaciones();
+        await refrecarDatos();
         aplicarTemaGuardado();
-        actualizarInterfaz();
         mostrarToast('Datos importados correctamente (' + tanqueos.length + ' tanqueos)', 'success');
       } else {
         mostrarToast('El archivo JSON no es válido', 'error');
@@ -288,7 +309,7 @@ function recalcularCampos() {
 }
 
 // ===== Manejo del formulario =====
-function manejarEnvioFormulario(e) {
+async function manejarEnvioFormulario(e) {
   e.preventDefault();
 
   // Validaciones
@@ -323,7 +344,7 @@ function manejarEnvioFormulario(e) {
 
   if (tanqueoEnEdicion) {
     // Actualizar tanqueo existente
-    const actualizado = Store.actualizarTanqueo(tanqueoEnEdicion.id, {
+    const actualizado = await Store.actualizarTanqueo(tanqueoEnEdicion.id, {
       fecha: inputFecha.value,
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
@@ -343,7 +364,7 @@ function manejarEnvioFormulario(e) {
     }
   } else {
     // Crear nuevo tanqueo
-    Store.agregarTanqueo({
+    await Store.agregarTanqueo({
       fecha: inputFecha.value,
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
@@ -360,10 +381,10 @@ function manejarEnvioFormulario(e) {
   }
 
   // Guardar estaciones nuevas
-  Store.agregarEstaciones(selectEstacion.value.trim());
+  await Store.agregarEstaciones(selectEstacion.value.trim());
 
   // Recargar interfaz completa
-  refrecarDatos();
+  await refrecarDatos();
 }
 
 // ===== Limpiar formulario =====
@@ -427,7 +448,7 @@ function cerrarModal() {
   btnModalEliminar.textContent = 'Eliminar';
 }
 
-function confirmarEliminacion() {
+async function confirmarEliminacion() {
   if (!tanqueoAEliminar) return;
 
   // Modo demo: cargar datos de ejemplo
@@ -438,11 +459,11 @@ function confirmarEliminacion() {
     return;
   }
 
-  const eliminado = Store.eliminarTanqueo(tanqueoAEliminar);
+  const eliminado = await Store.eliminarTanqueo(tanqueoAEliminar);
   if (eliminado) {
     mostrarToast('Tanqueo eliminado', 'success');
     cerrarModal();
-    refrecarDatos();
+    await refrecarDatos();
     // Si estábamos editando ese tanqueo, cancelamos
     if (tanqueoEnEdicion && tanqueoEnEdicion.id === tanqueoAEliminar) {
       cancelarEdicion();
@@ -454,9 +475,10 @@ function confirmarEliminacion() {
 }
 
 // ===== Refrescar datos =====
-function refrecarDatos() {
-  tanqueos = Store.cargarTanqueos();
-  estaciones = Store.cargarEstaciones();
+async function refrecarDatos() {
+  const datos = await Store.cargarTodo();
+  tanqueos = datos.tanqueos;
+  estaciones = datos.estaciones;
   actualizarInterfaz();
 }
 
@@ -934,14 +956,14 @@ function cargarDatosDemo() {
   ejecutarCargaDemo();
 }
 
-function ejecutarCargaDemo() {
+async function ejecutarCargaDemo() {
   const datosDemo = Store.cargarDatosDemo();
-  Store.guardarTanqueos(datosDemo);
+  await Store.guardarTanqueos(datosDemo);
   // Agregar estaciones de la demo
   const estacionesDemo = [...new Set(datosDemo.map(t => t.estacion))];
-  Store.agregarEstaciones(estacionesDemo);
+  await Store.agregarEstaciones(estacionesDemo);
   mostrarToast('Datos de ejemplo cargados', 'success');
-  refrecarDatos();
+  await refrecarDatos();
 }
 
 // ===== Tema =====
@@ -956,16 +978,16 @@ function aplicarTemaGuardado() {
   }
 }
 
-function alternarTema() {
+async function alternarTema() {
   const esOscuro = document.documentElement.getAttribute('data-theme') === 'dark';
   if (esOscuro) {
     document.documentElement.removeAttribute('data-theme');
     $('btn-theme').textContent = '🌙';
-    Store.guardarTema('light');
+    await Store.guardarTema('light');
   } else {
     document.documentElement.setAttribute('data-theme', 'dark');
     $('btn-theme').textContent = '☀️';
-    Store.guardarTema('dark');
+    await Store.guardarTema('dark');
   }
   // Re-renderizar gráfico con nuevo tema
   renderizarGrafico();
@@ -986,5 +1008,149 @@ document.addEventListener('keydown', (e) => {
     if (!modalNuevaEstacion.classList.contains('hidden')) {
       cerrarModalNuevaEstacion();
     }
+    if (!configOverlay.classList.contains('hidden')) {
+      cerrarConfiguracionSupabase();
+    }
   }
 });
+
+// ===== Supabase: indicador, migración y configuración =====
+
+function mostrarLoading(mensaje) {
+  loadingMensaje.textContent = mensaje || 'Cargando…';
+  loadingOverlay.classList.remove('hidden');
+}
+
+function ocultarLoading() {
+  loadingOverlay.classList.add('hidden');
+}
+
+function setSyncStatus(estado, texto) {
+  syncStatus.className = 'sync-status ' + estado;
+  syncStatus.textContent = texto;
+}
+
+function aplicarConfiguracionSupabase(mostrarError) {
+  const credenciales = AppConfig.obtenerCredenciales();
+  if (credenciales) {
+    setSyncStatus('', '☁️ Verificando…');
+    AppConfig.aplicarCredenciales().then(() => {
+      setSyncStatus('', '☁️ Conectado');
+    }).catch(() => {
+      setSyncStatus('sync-warning', '⚠️ Sin conexión');
+    });
+  } else {
+    setSyncStatus('sync-warning', '⚙️ Configurar');
+  }
+
+  if (mostrarError) {
+    configError.textContent = AppConfig.obtenerUltimoError() || '';
+    configError.classList.toggle('hidden', !configError.textContent);
+  }
+}
+
+async function iniciarSupabase() {
+  const credenciales = AppConfig.obtenerCredenciales();
+
+  if (credenciales) {
+    // Configuración guardada: cargar datos desde Supabase
+    mostrarLoading('Cargando datos desde Supabase…');
+    try {
+      await AppConfig.aplicarCredenciales();
+      const datos = await Store.cargarTodo();
+      tanqueos = datos.tanqueos;
+      estaciones = datos.estaciones;
+      actualizarInterfaz();
+      setSyncStatus('', '☁️ Conectado');
+    } catch (err) {
+      console.error('Error al cargar datos desde Supabase:', err);
+      setSyncStatus('sync-warning', '⚠️ Sin conexión');
+    } finally {
+      ocultarLoading();
+    }
+
+    // Si hay datos locales que aún no están en Supabase, ofrecer migrar
+    const pendientes = Store.contarLocalesPendientes();
+    if (pendientes > 0) {
+      btnMigrar.textContent = '📤 Migrar ' + pendientes;
+      btnMigrar.classList.remove('hidden');
+    }
+  } else {
+    // Sin configuración: usar datos locales legacy y mostrar pantalla de setup
+    setSyncStatus('sync-warning', '⚙️ Configurar');
+    abrirConfiguracionSupabase();
+  }
+}
+
+async function migrarDatosLocales() {
+  mostrarLoading('Migrando tus datos a Supabase…');
+  try {
+    const migrados = await Store.migrarDatosLocales();
+    const datos = await Store.cargarTodo();
+    tanqueos = datos.tanqueos;
+    estaciones = datos.estaciones;
+    actualizarInterfaz();
+    btnMigrar.classList.add('hidden');
+    setSyncStatus('', '☁️ Conectado');
+    mostrarToast('Migrados ' + migrados.migrados + ' tanqueos a Supabase', 'success');
+  } catch (err) {
+    console.error('Error al migrar datos:', err);
+    mostrarToast('No se pudo migrar. Revisa la configuración.', 'error');
+    setSyncStatus('sync-offline', '⚠️ Sin conexión');
+  } finally {
+    ocultarLoading();
+  }
+}
+
+function abrirConfiguracionSupabase() {
+  const credenciales = AppConfig.obtenerCredenciales();
+  if (credenciales) {
+    configUrl.value = credenciales.url || '';
+    configKey.value = credenciales.key || '';
+    btnConfigCerrar.classList.remove('hidden');
+    btnConfigMasTarde.classList.add('hidden');
+  } else {
+    btnConfigCerrar.classList.add('hidden');
+    btnConfigMasTarde.classList.remove('hidden');
+  }
+  configError.classList.add('hidden');
+  configOverlay.classList.remove('hidden');
+  configUrl.focus();
+}
+
+function cerrarConfiguracionSupabase() {
+  configOverlay.classList.add('hidden');
+}
+
+async function guardarConfiguracionSupabase() {
+  const url = configUrl.value.trim();
+  const key = configKey.value.trim();
+
+  if (!url || !key) {
+    configError.textContent = 'Ingresa tanto la Project URL como la anon public key.';
+    configError.classList.remove('hidden');
+    return;
+  }
+
+  const ok = AppConfig.guardarCredenciales(url, key);
+  if (!ok) {
+    configError.textContent = AppConfig.obtenerUltimoError() || 'URL o clave inválida.';
+    configError.classList.remove('hidden');
+    return;
+  }
+
+  configOverlay.classList.add('hidden');
+  setSyncStatus('', '☁️ Verificando…');
+
+  mostrarLoading('Conectando con Supabase…');
+  try {
+    await AppConfig.aplicarCredenciales();
+    setSyncStatus('', '☁️ Conectado');
+    await iniciarSupabase();
+  } catch (err) {
+    console.error('Error al conectar:', err);
+    setSyncStatus('sync-offline', '⚠️ Sin conexión');
+  } finally {
+    ocultarLoading();
+  }
+}

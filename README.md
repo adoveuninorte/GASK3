@@ -1,47 +1,44 @@
 # ⛽ GASOLINA K3
 
-Aplicación web para registrar tus consumos de gasolina, calcular rendimiento (km/gal), costos en pesos colombianos (COP) y generar estadísticas — 100% en tu navegador.
+Aplicación web para registrar tus consumos de gasolina, calcular rendimiento (km/gal), costos en pesos colombianos (COP) y generar estadísticas. Los datos se sincronizan con **Supabase** (nube) y la app también funciona sin conexión.
 
-## 🚀 Publicar en GitHub Pages
+## ☁️ Configurar Supabase (recomendado)
 
-### Opción 1: Subir archivos manualmente
+En el primer uso, la app te pide los datos de conexión (también puedes abrir la configuración con el botón **⚙️** de la cabecera):
 
-1. **Crea un repositorio** en GitHub (por ejemplo: `gasolinak3`).
-2. **Sube los archivos** de este proyecto al repositorio:
-   - `index.html`
-   - `css/` (carpeta con `styles.css`)
-   - `js/` (carpeta con `app.js`, `store.js`, `utils.js`)
-   - `README.md` (opcional)
-3. Ve a **Settings → Pages** en tu repositorio.
-4. En **Branch**, selecciona la rama `main` y carpeta `/ (root)`.
-5. Haz clic en **Save**.
-6. Espera 1-2 minutos y tu app estará disponible en:
+1. Crea un proyecto gratis en [supabase.com](https://supabase.com).
+2. En el **SQL Editor**, ejecuta el script [`supabase-schema.sql`](supabase-schema.sql) (crea las tablas `tanqueos` y `estaciones`, índices y políticas de acceso público).
+3. En **Settings → API**, copia la *Project URL* y la *anon public key*.
+4. Pégalas en la app y haz clic en **🔌 Conectar**.
+
+La configuración queda guardada en tu navegador (localStorage). Si ya tenías datos de la versión anterior, la app mostrará el botón **📤 Migrar datos** para subirlos a la nube (sin duplicar registros).
+
+> **¿Sin Supabase?** Puedes cerrar la pantalla con **"Más tarde"** y la app seguirá funcionando guardando los datos localmente en tu navegador.
+
+## 🚀 Publicación en GitHub Pages
+
+Esta app ya está publicada en:
 
 ```
-https://tu-usuario.github.io/gasolinak3/
+https://adoveuninorte.github.io/GASK3/
 ```
 
-### Opción 2: Usar Git (línea de comandos)
+El sitio se sirve desde la rama `main` (carpeta raíz). Para actualizar la versión publicada, sube los cambios al repositorio:
 
 ```bash
-# 1. Inicializar repositorio
-git init
-
-# 2. Agregar todos los archivos
+# 1. Agregar todos los cambios
 git add .
 
-# 3. Crear el primer commit
-git commit -m "GASOLINA K3 - Registro de consumo de gasolina"
+# 2. Crear un commit
+git commit -m "Migración a Supabase"
 
-# 4. Agregar el repositorio remoto (reemplaza con tu URL)
-git remote add origin https://github.com/TU-USUARIO/gasolinak3.git
-
-# 5. Subir a GitHub
-git branch -M main
-git push -u origin main
-
-# 6. Activar GitHub Pages en Settings → Pages → Branch: main / (root)
+# 3. Subir a GitHub
+git push origin main
 ```
+
+GitHub Pages publica automáticamente en 1-2 minutos (Settings → Pages → Branch: `main` / `(root)`).
+
+> **Nota**: todas las rutas del sitio son relativas (`css/`, `js/`), por lo que funciona correctamente bajo la subruta `/GASK3/`.
 
 ## 💡 Uso
 
@@ -63,14 +60,16 @@ git push -u origin main
 ## 📁 Estructura del Proyecto
 
 ```
-├── index.html          → Estructura de la página
+├── index.html             → Estructura de la página
 ├── css/
-│   └── styles.css      → Estilos (tema claro/oscuro, responsive)
+│   └── styles.css         → Estilos (tema claro/oscuro, responsive)
 ├── js/
-│   ├── app.js          → Lógica principal de la interfaz
-│   ├── store.js        → Persistencia en localStorage
-│   └── utils.js        → Utilidades (formato COP, cálculos, CSV)
-└── README.md           → Este archivo
+│   ├── app.js             → Lógica principal de la interfaz
+│   ├── store.js           → Capa de datos (Supabase + caché local)
+│   ├── config.js          → Configuración de Supabase (Project URL y anon key)
+│   └── utils.js           → Utilidades (formato COP, cálculos, CSV)
+├── supabase-schema.sql    → Esquema SQL para crear las tablas en Supabase
+└── README.md              → Este archivo
 ```
 
 ## 📊 Cálculo del Rendimiento
@@ -89,18 +88,19 @@ Esto significa que puedes hacer tanqueos parciales sin que afecten la precisión
 
 ## 🔒 Privacidad
 
-- Todos los datos se guardan **localmente en tu navegador** (localStorage).
-- No se envía información a ningún servidor.
-- Si borras los datos del navegador, se perderán los registros. Usa **Exportar CSV** para respaldarlos.
+- Si configuras Supabase, los datos se guardan en tu **propio proyecto** de Supabase (tú controlas el proyecto; el esquema incluye políticas de acceso público para uso sin login).
+- Si no configuras Supabase, los datos se guardan **localmente en tu navegador**.
+- Usa **💾 Exportar JSON** para respaldar tus registros y **📂 Importar JSON** para restaurarlos en cualquier momento.
 
 ## 🛠️ Tecnologías
 
 - HTML5 + CSS3 + JavaScript vanilla
 - [Chart.js](https://www.chartjs.org/) para los gráficos (cargado desde CDN)
-- localStorage para persistencia
+- [Supabase](https://supabase.com) para la base de datos en la nube (PostgreSQL)
+- localStorage para caché local y modo sin conexión
 
 ---
 
-⚠️ **Importante**: No se requiere servidor backend. GitHub Pages sirve los archivos estáticos sin configuración adicional.
+⚠️ **Importante**: No se requiere servidor backend. GitHub Pages sirve los archivos estáticos y Supabase actúa como base de datos. La *anon key* es pública por diseño y las políticas del esquema permiten lectura/escritura anónima.
 
 Desarrollado con ❤️ para llevar el control de tu consumo de gasolina.
