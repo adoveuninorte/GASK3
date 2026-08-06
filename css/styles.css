@@ -61,6 +61,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
 main {
@@ -122,6 +124,17 @@ header {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Acciones de datos agrupadas (en móvil: menú desplegable) */
+.menu-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#btn-menu {
+  display: none;
 }
 
 /* ===== Botones ===== */
@@ -682,19 +695,27 @@ tbody tr:last-child td {
 
 @media (max-width: 768px) {
   .tabs {
-    top: 44px;
-    padding: 3px;
-    margin: 10px 0;
-    border-radius: 10px;
+    top: 60px;
+    padding: 4px;
+    margin: 12px 0;
+    border-radius: 12px;
     gap: 4px;
+    background: var(--hover-bg);
+    box-shadow: none;
   }
 
   .tab-btn {
-    padding: 6px 8px;
-    font-size: 0.8rem;
-    min-height: 38px;
-    gap: 4px;
-    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    min-height: 42px;
+    gap: 5px;
+    border-radius: 9px;
+  }
+
+  .tab-btn.active {
+    background: var(--bg-card);
+    color: var(--primary-dark);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
   .toggle-group {
@@ -752,13 +773,13 @@ tbody tr:last-child td {
 
 @media (max-width: 480px) {
   .tabs {
-    top: 40px;
+    top: 60px;
   }
 
   .tab-btn {
-    font-size: 0.72rem;
-    padding: 5px 6px;
-    min-height: 36px;
+    font-size: 0.78rem;
+    padding: 6px 8px;
+    min-height: 40px;
   }
 
   .dashboard-card {
@@ -947,44 +968,47 @@ footer {
 
   .header-content {
     flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
     text-align: left;
-    gap: 6px;
-    padding: 4px 0;
+    gap: 8px;
+    padding: 0;
   }
 
   .logo {
     justify-content: flex-start;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
   }
 
   .logo h1 {
-    font-size: 1rem;
-    letter-spacing: 0.5px;
+    font-size: 1.05rem;
+    letter-spacing: 0.4px;
     white-space: nowrap;
   }
 
   .logo-icon {
-    font-size: 1.3rem;
+    font-size: 1.35rem;
   }
 
+  /* En móvil: una sola fila compacta con estado + iconos + menú hamburguesa */
   .header-actions {
     justify-content: flex-end;
+    margin-left: auto;
     width: auto;
     display: flex;
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 6px;
   }
 
-  .header-actions .btn {
-    padding: 6px 8px;
+  header {
+    padding: 10px 0;
+    box-shadow: var(--shadow);
+  }
+
+  #sync-status {
     font-size: 0.7rem;
-    white-space: nowrap;
-    min-height: 36px;
-  }
-
-  .header-actions #btn-export {
-    display: none;
+    padding: 4px 10px;
   }
 
   .header-actions .btn-icon {
@@ -993,35 +1017,85 @@ footer {
     font-size: 1rem;
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
+  /* Botón menú hamburguesa (solo móvil) */
+  #btn-menu {
+    display: flex;
+  }
+
+  /* Las acciones de datos se agrupan en un menú desplegable */
+  .menu-acciones {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 8px;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
-    margin-bottom: 8px;
+    display: none;
+    min-width: 230px;
+    padding: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 300;
+  }
+
+  .menu-acciones.open {
+    display: flex;
+  }
+
+  .menu-acciones .btn {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .menu-acciones .btn-icon {
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1.2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
   }
 
   .stat-card {
-    padding: 8px 4px;
-    border-radius: 10px;
+    padding: 14px 12px;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .stat-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .stat-value {
-    font-size: 1rem;
+    font-size: 1.15rem;
   }
 
   .stat-label {
-    font-size: 0.62rem;
-    letter-spacing: 0;
-    margin-bottom: 2px;
+    font-size: 0.68rem;
+    letter-spacing: 0.2px;
+    margin-bottom: 3px;
   }
 
   .stat-unit {
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     margin-top: 0;
   }
 
   .card {
-    padding: 12px;
-    border-radius: 10px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: none;
   }
 
   .card-header {
@@ -1105,6 +1179,7 @@ footer {
 
   section {
     margin: 10px 0;
+    scroll-margin-top: 120px;
   }
 
   /* Botones de acciones en tabla */
@@ -1152,9 +1227,9 @@ footer {
   #tabla-estaciones tbody tr {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 8px 10px;
-    margin-bottom: 8px;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
     box-shadow: none;
   }
 
@@ -1168,9 +1243,9 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;
-    border-bottom: 1px dashed var(--border);
-    font-size: 0.82rem;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.84rem;
     gap: 8px;
   }
 
@@ -1249,6 +1324,16 @@ footer {
     animation: sheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   }
 
+  .modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    margin: 0 auto 14px;
+  }
+
   @keyframes sheetUp {
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
@@ -1285,24 +1370,24 @@ footer {
 /* ===== Adaptabilidad móvil (teléfonos pequeños) ===== */
 @media (max-width: 480px) {
   .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
 
   .stat-card {
-    padding: 6px 3px;
+    padding: 12px 10px;
   }
 
   .stat-label {
-    font-size: 0.55rem;
+    font-size: 0.62rem;
   }
 
   .stat-value {
-    font-size: 0.85rem;
+    font-size: 1.05rem;
   }
 
   .stat-unit {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .btn { padding: 6px 10px; font-size: 0.75rem; }
@@ -1346,22 +1431,32 @@ footer {
 
   #tabla-tanqueos tbody td::before,
   #tabla-estaciones tbody td::before { font-size: 0.55rem; min-width: 70px; }
+
+  /* Formulario de una sola columna en pantallas pequeñas */
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Ocultar el estado de sincronización para mantener la cabecera limpia */
+  #sync-status {
+    display: none;
+  }
 }
 
 /* ===== Botón flotante (FAB) ===== */
 .fab {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 60px;
-  height: 60px;
+  bottom: 22px;
+  right: 22px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: #fff;
   border: none;
-  font-size: 2rem;
-  font-weight: 700;
-  box-shadow: 0 4px 16px rgba(243, 156, 18, 0.4);
+  font-size: 1.8rem;
+  font-weight: 500;
+  box-shadow: 0 4px 14px rgba(243, 156, 18, 0.35);
   cursor: pointer;
   z-index: 999;
   display: none;
@@ -1384,6 +1479,8 @@ footer {
 @media (max-width: 768px) {
   .fab {
     display: flex;
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    right: calc(22px + env(safe-area-inset-right, 0px));
   }
 }
 

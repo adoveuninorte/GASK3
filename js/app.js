@@ -29,6 +29,8 @@ const inputImportJSON = $('input-import-json');
 const btnMigrar = $('btn-migrar');
 const btnConfig = $('btn-config');
 const syncStatus = $('sync-status');
+const btnMenu = $('btn-menu');
+const menuAcciones = $('menu-acciones');
 const loadingOverlay = $('loading-overlay');
 const loadingMensaje = $('loading-mensaje');
 const configOverlay = $('config-overlay');
@@ -158,6 +160,23 @@ function registrarEventos() {
   // Botones del header
   $('btn-theme').addEventListener('click', alternarTema);
   $('btn-export').addEventListener('click', exportarDatosCSV);
+
+  // Menú hamburguesa (móvil): abre/cierra las acciones de datos
+  btnMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    alternarMenuAcciones();
+  });
+  menuAcciones.addEventListener('click', (e) => {
+    if (e.target.closest('button')) cerrarMenuAcciones();
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#btn-menu') && !e.target.closest('#menu-acciones')) {
+      cerrarMenuAcciones();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cerrarMenuAcciones();
+  });
 
   // Supabase
   btnMigrar.addEventListener('click', migrarDatosLocales);
@@ -941,6 +960,13 @@ function exportarDatosCSV() {
 }
 
 // ===== Tema =====
+function actualizarThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+  meta.setAttribute('content', oscuro ? '#16213e' : '#1a252f');
+}
+
 function aplicarTemaGuardado() {
   const tema = Store.cargarTema();
   if (tema === 'dark') {
@@ -950,6 +976,7 @@ function aplicarTemaGuardado() {
     document.documentElement.removeAttribute('data-theme');
     $('btn-theme').textContent = '🌙';
   }
+  actualizarThemeColor();
 }
 
 async function alternarTema() {
@@ -963,6 +990,7 @@ async function alternarTema() {
     $('btn-theme').textContent = '☀️';
     await Store.guardarTema('dark');
   }
+  actualizarThemeColor();
   // Re-renderizar gráfico con nuevo tema
   renderizarGrafico();
 }
@@ -1002,6 +1030,18 @@ function ocultarLoading() {
 function setSyncStatus(estado, texto) {
   syncStatus.className = 'sync-status ' + estado;
   syncStatus.textContent = texto;
+}
+
+// ===== Menú de acciones (móvil) =====
+function alternarMenuAcciones() {
+  const abierto = !menuAcciones.classList.contains('open');
+  menuAcciones.classList.toggle('open', abierto);
+  btnMenu.setAttribute('aria-expanded', String(abierto));
+}
+
+function cerrarMenuAcciones() {
+  menuAcciones.classList.remove('open');
+  btnMenu.setAttribute('aria-expanded', 'false');
 }
 
 function aplicarConfiguracionSupabase(mostrarError) {

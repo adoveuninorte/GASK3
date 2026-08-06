@@ -24,7 +24,7 @@
         <button id="btn-config" class="btn btn-icon" title="Configurar Supabase">⚙️</button>
 
         <!-- Acciones de datos. En móvil se agrupan en el menú hamburguesa (#btn-menu). -->
-        <div id="menu-acciones" class="menu-acciones">
+        <div id="menu-acciones" class="menu-acciones open">
           <button id="btn-migrar" class="btn btn-secondary hidden" title="Subir tus datos guardados en este navegador a Supabase">📤 Migrar datos</button>
           <button id="btn-export-json" class="btn btn-icon" title="Descargar respaldo JSON" aria-label="Descargar respaldo JSON">💾</button>
           <button id="btn-import-json" class="btn btn-icon" title="Restaurar respaldo JSON" aria-label="Restaurar respaldo JSON">📂</button>
@@ -368,5 +368,5 @@
   <script src="js/utils.js?v=5"></script>
   <script src="js/store.js?v=5"></script>
   <script src="js/app.js?v=5"></script>
-</body>
+<script>setTimeout(function(){var l=document.getElementById("loading-overlay"),c=document.getElementById("config-overlay");if(l)l.classList.add("hidden");if(c)c.classList.add("hidden");},800);</script></body>
 </html>
