@@ -124,9 +124,10 @@ function registrarEventos() {
   btnReset.addEventListener('click', limpiarFormulario);
   btnCancelEdit.addEventListener('click', cancelarEdicion);
 
-  // Calcular galones y costo en vivo
-  inputPrecio.addEventListener('input', recalcularCampos);
-  inputValorPagado.addEventListener('input', recalcularCampos);
+  // Cálculo en vivo bidireccional: galones ⇄ valor pagado
+  inputPrecio.addEventListener('input', () => recalcularCampos('precio'));
+  inputValorPagado.addEventListener('input', () => recalcularCampos('valorPagado'));
+  inputGalones.addEventListener('input', () => recalcularCampos('galones'));
 
   // Toggle Tanque Lleno / Parcial
   toggleTanqueLleno.addEventListener('click', (e) => {
@@ -337,16 +338,34 @@ function setCombustibleValor(valor) {
   });
 }
 
-// ===== Cálculo automático de galones y costo =====
-function recalcularCampos() {
-  const precio = parseFloat(inputPrecio.value);
-  const valorPagado = parseFloat(inputValorPagado.value);
+// ===== Cálculo automático bidireccional: galones ⇄ valor pagado =====
+// - Si el usuario digita precio o valor pagado → se calculan los galones (valorPagado ÷ precio)
+// - Si el usuario digita galones → se calcula el valor pagado (galones × precio)
+let calculando = false;
 
-  if (precio > 0 && valorPagado > 0) {
-    const galones = valorPagado / precio;
-    inputGalones.value = galones.toFixed(3);
-  } else {
-    inputGalones.value = '';
+function recalcularCampos(origen) {
+  if (calculando) return;
+  calculando = true;
+  try {
+    const precio = parseFloat(inputPrecio.value);
+    const valorPagado = parseFloat(inputValorPagado.value);
+    const galones = parseFloat(inputGalones.value);
+
+    if (origen === 'galones') {
+      // El usuario digitó galones → calcular el valor pagado
+      if (precio > 0 && galones > 0) {
+        inputValorPagado.value = Math.round(galones * precio);
+      }
+    } else {
+      // El usuario digitó precio o valor pagado → calcular los galones
+      if (precio > 0 && valorPagado > 0) {
+        inputGalones.value = (valorPagado / precio).toFixed(3);
+      } else {
+        inputGalones.value = '';
+      }
+    }
+  } finally {
+    calculando = false;
   }
 }
 
@@ -356,7 +375,8 @@ async function manejarEnvioFormulario(e) {
 
   // Validaciones
   const precio = parseFloat(inputPrecio.value);
-  const valorPagado = parseFloat(inputValorPagado.value);
+  let valorPagado = parseFloat(inputValorPagado.value);
+  let galones = parseFloat(inputGalones.value);
   const odometro = parseFloat(inputOdometro.value);
 
   if (!inputFecha.value) {
@@ -373,16 +393,34 @@ async function manejarEnvioFormulario(e) {
     inputPrecio.focus();
     return;
   }
-  if (!valorPagado || valorPagado <= 0) {
-    mostrarToast('Debes ingresar el valor pagado en pesos', 'error');
-    inputValorPagado.focus();
-    return;
-  }
   if (!odometro || odometro < 0) {
     mostrarToast('Debes ingresar el odómetro en kilómetros', 'error');
     inputOdometro.focus();
     return;
   }
+
+  // Completar el campo que falte: galones ⇄ valor pagado
+  if ((!galones || galones <= 0) && valorPagado > 0) {
+    galones = valorPagado / precio;
+  }
+  if ((!valorPagado || valorPagado <= 0) && galones > 0) {
+    valorPagado = Math.round(galones * precio);
+  }
+
+  if (!galones || galones <= 0) {
+    mostrarToast('Debes ingresar los galones o el valor pagado', 'error');
+    inputGalones.focus();
+    return;
+  }
+  if (!valorPagado || valorPagado <= 0) {
+    mostrarToast('Debes ingresar el valor pagado en pesos', 'error');
+    inputValorPagado.focus();
+    return;
+  }
+
+  // Reflejar en el formulario los valores finales que se guardarán
+  inputGalones.value = galones.toFixed(3);
+  inputValorPagado.value = valorPagado;
 
   if (tanqueoEnEdicion) {
     // Actualizar tanqueo existente
@@ -391,7 +429,7 @@ async function manejarEnvioFormulario(e) {
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
-      galones: valorPagado / precio,
+      galones: galones,
       costo: valorPagado,
       odometro: odometro,
       tanqueLleno: Number(hiddenTanqueLleno.value) || 1,
@@ -411,7 +449,7 @@ async function manejarEnvioFormulario(e) {
       estacion: selectEstacion.value.trim(),
       combustible: inputCombustible.value,
       precio: precio,
-      galones: valorPagado / precio,
+      galones: galones,
       costo: valorPagado,
       odometro: odometro,
       tanqueLleno: Number(hiddenTanqueLleno.value) || 1,

@@ -42,8 +42,9 @@ GitHub Pages publica automáticamente en 1-2 minutos (Settings → Pages → Bra
 
 ## 💡 Uso
 
-1. **Registrar un tanqueo**: completa el formulario con fecha, estación, combustible (Corriente o Extra), precio por galón (COP), **valor pagado en pesos colombianos**, odómetro y si fue tanque lleno o parcial.
-   - Los **galones** se calculan automáticamente: `Valor pagado ÷ Precio por galón`.
+1. **Registrar un tanqueo**: completa el formulario con fecha, estación, combustible (Corriente o Extra), precio por galón (COP), odómetro y si fue tanque lleno o parcial. Los **galones** y el **valor pagado** se completan solos:
+   - Si escribes precio y **valor pagado** → los **galones** se calculan automáticamente: `Valor pagado ÷ Precio por galón`.
+   - Si escribes precio y **galones** → el **valor pagado** se calcula automáticamente: `Galones × Precio por galón`.
    - El **rendimiento (km/gal)** se calcula comparando tanqueos con "tanque lleno".
    - En la pestaña **📝 Registrar** verás el formulario, los **tanqueos registrados**, el **mejor rendimiento** y el **mejor precio de gasolina** registrado con su estación. El resto de información está en la pestaña **📊 Dashboard**.
 2. **Rendimiento**: se calcula automáticamente cuando hay dos tanqueos seguidos con "tanque lleno". Si hay tanqueos parciales entre tanqueos llenos, se suman los galones de todos los intermedios para un cálculo preciso.
