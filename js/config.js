@@ -3,21 +3,22 @@
 // =====================================================================
 // CONFIGURACIÓN DE SUPABASE
 // ---------------------------------------------------------------------
-// Opción A (recomendada): deja estos campos VACÍOS y configura la app
-//   desde la pantalla que aparece en el primer uso (⚙️). La app guarda
-//   tus datos de conexión en el navegador y puedes publicarla tal cual
-//   en GitHub Pages sin editar nada.
+// ✅ CONFIGURADA para producción (proyecto: vffysisnbhgkmprxzfii).
+//   - Project URL:  https://vffysisnbhgkmprxzfii.supabase.co
+//   - Anon Key:     sb_publishable_WuaTfItdvAbaIDhhxSYTRw_ssHXwQq9
 //
-// Opción B: pega aquí los valores de tu proyecto antes de publicar.
-//   - Project URL:  https://XXXX.supabase.co
-//   - Anon Key:     eyJhbGciOiJIUzI1NiIs...
+// Cómo funciona la prioridad:
+//   1) La configuración guardada en el navegador (menú ⚙️), si existe.
+//   2) Si no hay guardada, se usa automáticamente la de este archivo.
+//   - Para volver al valor predeterminado de este archivo desde la app,
+//     usa el botón "♻️ Restablecer" de la pantalla de configuración.
 //
-// Los encuentras en: Supabase Dashboard → tu proyecto →
-//   Settings → API (o "Project Settings → API Keys")
+// Los datos se encuentran en: Supabase Dashboard → tu proyecto →
+//   Settings → API Keys.
 // =====================================================================
 const SUPABASE_CONFIG = {
-  url: '',
-  anonKey: ''
+  url: 'https://vffysisnbhgkmprxzfii.supabase.co',
+  anonKey: 'sb_publishable_WuaTfItdvAbaIDhhxSYTRw_ssHXwQq9'
 };
 
 // Clave en localStorage donde se guarda la configuración escrita en la app

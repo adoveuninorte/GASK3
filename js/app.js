@@ -38,6 +38,7 @@ const configKey = $('config-key');
 const btnConfigGuardar = $('btn-config-guardar');
 const btnConfigCerrar = $('btn-config-cerrar');
 const btnConfigMasTarde = $('btn-config-mas-tarde');
+const btnConfigReset = $('btn-config-reset');
 
 const tablaBody = $('tabla-body');
 const tablaVacia = $('tabla-vacia');
@@ -158,6 +159,7 @@ function registrarEventos() {
   btnConfigGuardar.addEventListener('click', guardarConfiguracionSupabase);
   btnConfigCerrar.addEventListener('click', cerrarConfiguracionSupabase);
   btnConfigMasTarde.addEventListener('click', cerrarConfiguracionSupabase);
+  btnConfigReset.addEventListener('click', restablecerConfiguracionSupabase);
   configOverlay.addEventListener('click', (e) => {
     if (e.target === configOverlay) cerrarConfiguracionSupabase();
   });
@@ -1086,6 +1088,16 @@ function abrirConfiguracionSupabase() {
 
 function cerrarConfiguracionSupabase() {
   configOverlay.classList.add('hidden');
+}
+
+function restablecerConfiguracionSupabase() {
+  AppConfig.borrarCredenciales();
+  configUrl.value = '';
+  configKey.value = '';
+  configError.classList.add('hidden');
+  configOverlay.classList.add('hidden');
+  mostrarToast('Configuración restablecida. Conectando a la predeterminada…', 'info');
+  iniciarSupabase();
 }
 
 async function guardarConfiguracionSupabase() {
