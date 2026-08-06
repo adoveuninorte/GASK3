@@ -55,7 +55,7 @@ GitHub Pages publica automáticamente en 1-2 minutos (Settings → Pages → Bra
    - Total galones
 4. **Exportar CSV**: botón en la cabecera para descargar todos los registros (compatible con Excel).
 5. **Tema oscuro**: botón 🌙/☀️ para alternar entre tema claro y oscuro.
-6. **Respaldo JSON**: los botones **💾** (Exportar) y **📂** (Importar) se muestran solo con su icono en la cabecera; al pasar el cursor muestran su función. En móvil, el menú **☰** agrupa todas las acciones de datos.
+6. **Respaldo JSON**: usa **💾 Exportar JSON** para respaldar tus registros y **📂 Importar JSON** para restaurarlos. En móvil, el menú **☰** agrupa todas las acciones de datos.
 7. **Diseño responsive minimalista**: la aplicación se adapta a teléfonos y tablets con una estética sobria — cabecera compacta en una sola fila, estadísticas en cuadrícula de 2 columnas, formulario de una sola columna en pantallas pequeñas, tablas convertidas en tarjetas, modal como bottom-sheet con asa de arrastre y botón flotante **+** para registrar.
 
 ## 📁 Estructura del Proyecto
@@ -91,7 +91,7 @@ Esto significa que puedes hacer tanqueos parciales sin que afecten la precisión
 
 - Si configuras Supabase, los datos se guardan en tu **propio proyecto** de Supabase (tú controlas el proyecto; el esquema incluye políticas de acceso público para uso sin login).
 - Si no configuras Supabase, los datos se guardan **localmente en tu navegador**.
-- Usa el botón **💾** (Exportar JSON) de la cabecera para respaldar tus registros y **📂** (Importar JSON) para restaurarlos en cualquier momento.
+- Usa **💾 Exportar JSON** para respaldar tus registros y **📂 Importar JSON** para restaurarlos en cualquier momento.
 
 ## 🛠️ Tecnologías
 
