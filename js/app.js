@@ -1072,7 +1072,7 @@ function abrirConfiguracionSupabase() {
   const credenciales = AppConfig.obtenerCredenciales();
   if (credenciales) {
     configUrl.value = credenciales.url || '';
-    configKey.value = credenciales.key || '';
+    configKey.value = credenciales.anonKey || '';
     btnConfigCerrar.classList.remove('hidden');
     btnConfigMasTarde.classList.add('hidden');
   } else {
@@ -1093,7 +1093,9 @@ async function guardarConfiguracionSupabase() {
   const key = configKey.value.trim();
 
   if (!url || !key) {
-    configError.textContent = 'Ingresa tanto la Project URL como la anon public key.';
+    const falta = !url && !key ? 'Project URL y anon public key'
+      : (!url ? 'la Project URL' : 'la anon public key');
+    configError.textContent = 'Falta ' + falta + '. Ambos datos están en Supabase Dashboard → Settings → API Keys.';
     configError.classList.remove('hidden');
     return;
   }
@@ -1116,6 +1118,15 @@ async function guardarConfiguracionSupabase() {
   } catch (err) {
     console.error('Error al conectar:', err);
     setSyncStatus('sync-offline', '⚠️ Sin conexión');
+    // Reabrir la configuración mostrando el error real para que el usuario pueda corregirla
+    const detalle = (err && err.message)
+      ? err.message
+      : (Store.ultimoError && (Store.ultimoError.message || String(Store.ultimoError))) || 'No se pudo contactar Supabase.';
+    configError.textContent = 'No se pudo conectar: ' + detalle;
+    configError.classList.remove('hidden');
+    btnConfigCerrar.classList.remove('hidden');
+    btnConfigMasTarde.classList.add('hidden');
+    configOverlay.classList.remove('hidden');
   } finally {
     ocultarLoading();
   }
