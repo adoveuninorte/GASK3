@@ -410,6 +410,14 @@ section {
   grid-column: 1 / -1;
 }
 
+/* Fila de dos columnas fijas (p. ej. Precio + Valor Pagado) */
+.form-row-2 {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: inherit;
+}
+
 .form-group label {
   font-size: 0.85rem;
   font-weight: 600;
@@ -628,6 +636,12 @@ tbody tr:last-child td {
   box-shadow: 0 2px 8px rgba(230, 126, 34, 0.2);
 }
 
+.toggle-extra.active {
+  border-color: #8e44ad;
+  background: rgba(142, 68, 173, 0.12);
+  box-shadow: 0 2px 8px rgba(142, 68, 173, 0.2);
+}
+
 [data-theme="dark"] .toggle-btn {
   background: var(--bg-card);
 }
@@ -640,6 +654,11 @@ tbody tr:last-child td {
 [data-theme="dark"] .toggle-parcial.active {
   background: #4d331d;
   border-color: #e67e22;
+}
+
+[data-theme="dark"] .toggle-extra.active {
+  background: #4a235a;
+  border-color: #9b59b6;
 }
 
 /* ===== Dashboard ===== */

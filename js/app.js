@@ -8,6 +8,7 @@ const inputId = $('tanqueo-id');
 const inputFecha = $('fecha');
 const selectEstacion = $('estacion');
 const inputCombustible = $('combustible');
+const toggleCombustible = $('toggle-combustible');
 const inputPrecio = $('precio');
 const inputValorPagado = $('valorPagado');
 const inputGalones = $('galones');
@@ -132,6 +133,13 @@ function registrarEventos() {
     const btn = e.target.closest('.toggle-btn');
     if (!btn) return;
     setTanqueLlenoValor(Number(btn.dataset.valor));
+  });
+
+  // Toggle Tipo de Combustible (Corriente / Extra)
+  toggleCombustible.addEventListener('click', (e) => {
+    const btn = e.target.closest('.toggle-btn');
+    if (!btn) return;
+    setCombustibleValor(btn.dataset.valor);
   });
 
   // Filtros
@@ -321,6 +329,14 @@ function setTanqueLlenoValor(valor) {
   });
 }
 
+// ===== Toggle Tipo de Combustible =====
+function setCombustibleValor(valor) {
+  inputCombustible.value = valor;
+  toggleCombustible.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.valor === valor);
+  });
+}
+
 // ===== Cálculo automático de galones y costo =====
 function recalcularCampos() {
   const precio = parseFloat(inputPrecio.value);
@@ -422,8 +438,9 @@ function limpiarFormulario() {
   tanqueoEnEdicion = null;
   btnSubmit.innerHTML = '💾 Guardar Tanqueo';
   btnCancelEdit.classList.add('hidden');
-  // Por defecto: tanque parcial
+  // Por defecto: tanque parcial y combustible corriente
   setTanqueLlenoValor(1);
+  setCombustibleValor('Corriente');
 }
 
 // ===== Editar tanqueo =====
@@ -435,7 +452,7 @@ function comenzarEdicion(id) {
   inputId.value = tanqueo.id;
   inputFecha.value = tanqueo.fecha;
   selectEstacion.value = tanqueo.estacion;
-  inputCombustible.value = tanqueo.combustible;
+  setCombustibleValor(tanqueo.combustible || 'Corriente');
   inputPrecio.value = tanqueo.precio;
   inputValorPagado.value = tanqueo.costo;
   inputGalones.value = tanqueo.galones.toFixed(3);
