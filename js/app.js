@@ -1022,6 +1022,7 @@ async function iniciarSupabase() {
 
   if (credenciales) {
     // Configuración guardada: cargar datos desde Supabase
+    console.info('GASOLINA K3 → conectando a Supabase:', credenciales.url);
     mostrarLoading('Cargando datos desde Supabase…');
     try {
       await AppConfig.aplicarCredenciales();
@@ -1033,6 +1034,15 @@ async function iniciarSupabase() {
     } catch (err) {
       console.error('Error al cargar datos desde Supabase:', err);
       setSyncStatus('sync-warning', '⚠️ Sin conexión');
+      // Mostrar el error real y ofrecer corregir la configuración
+      const detalle = (err && err.message)
+        ? err.message
+        : (Store.ultimoError && (Store.ultimoError.message || String(Store.ultimoError))) || 'No se pudo contactar Supabase.';
+      configError.textContent = 'No se pudo conectar: ' + detalle;
+      configError.classList.remove('hidden');
+      btnConfigCerrar.classList.remove('hidden');
+      btnConfigMasTarde.classList.add('hidden');
+      configOverlay.classList.remove('hidden');
     } finally {
       ocultarLoading();
     }

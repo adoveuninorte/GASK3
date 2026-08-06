@@ -28,6 +28,7 @@ const Store = {
     if (typeof createClient !== 'function') {
       console.error('No se encontró el cliente de Supabase (supabase-js).');
       this.conectado = false;
+      this.ultimoError = new Error('No se cargó la librería de Supabase (supabase-js). Revisa tu conexión a internet o bloqueadores de scripts.');
       return false;
     }
     supabase = createClient(this.config.url, this.config.anonKey);

@@ -25,6 +25,20 @@ const SUPABASE_CONFIG = {
 const STORE_CONFIG_KEY = 'gasolinak3_supabase_config';
 
 /**
+ * Normaliza la Project URL de Supabase:
+ * - quita espacios, barra final y el sufijo "/rest/v1" (por si el usuario
+ *   copió la URL de la API REST completa en vez de la Project URL).
+ * @param {string} url
+ * @returns {string}
+ */
+function normalizarUrlSupabase(url) {
+  return String(url || '')
+    .trim()
+    .replace(/\/rest\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
+}
+
+/**
  * Devuelve la configuración de Supabase válida (la guardada en la app
  * o la de este archivo) o null si no hay configuración.
  * @returns {{url: string, anonKey: string}|null}
@@ -36,7 +50,7 @@ function cargarConfigSupabase() {
     if (guardada) {
       const cfg = JSON.parse(guardada);
       if (cfg && cfg.url && cfg.anonKey) {
-        return { url: String(cfg.url).trim(), anonKey: String(cfg.anonKey).trim() };
+        return { url: normalizarUrlSupabase(cfg.url), anonKey: String(cfg.anonKey).trim() };
       }
     }
   } catch (e) {
@@ -48,7 +62,7 @@ function cargarConfigSupabase() {
     SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey &&
     !/TU-PROYECTO|TU_ANON|TU-ANON|your-project|your-anon|xxxx/i.test(SUPABASE_CONFIG.url + SUPABASE_CONFIG.anonKey)
   ) {
-    return { url: SUPABASE_CONFIG.url.trim(), anonKey: SUPABASE_CONFIG.anonKey.trim() };
+    return { url: normalizarUrlSupabase(SUPABASE_CONFIG.url), anonKey: SUPABASE_CONFIG.anonKey.trim() };
   }
 
   return null;
@@ -57,7 +71,7 @@ function cargarConfigSupabase() {
 /** Guarda la configuración de Supabase escrita desde la app. */
 function guardarConfigSupabase(url, anonKey) {
   localStorage.setItem(STORE_CONFIG_KEY, JSON.stringify({
-    url: String(url).trim(),
+    url: normalizarUrlSupabase(url),
     anonKey: String(anonKey).trim()
   }));
 }
